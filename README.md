@@ -5,7 +5,7 @@ En este repositorio de encuentra la información asociada al curso de *Estadíst
 **(1). Talleres prácticos:** Se realizarán dos talleres prácticos semanales. El objetivo es profundizar los conocimientos adquiridos en el aula, por lo que es recomendable asistir con una base teórica decente 😄. El horario de cada taller es el siguiente:
 
 - **Lunes: (Presencial).** Bloque 14 Salón 302. (10:00- 12:00)
-- **Jueves: (Virtual).** A través de Google- Meet **([Enlace meet](https://meet.google.com/dii-scsp-zvv))**. ()
+- **Jueves: (Virtual).** A través de Google- Meet **([Enlace meet](https://meet.google.com/dii-scsp-zvv))**. (Pendiente horario)
 
 El taller del lunes es el mismo que el taller del jueves, es así que pueden escoger el día preferido. 
 
