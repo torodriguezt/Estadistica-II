@@ -15,7 +15,7 @@ El taller del lunes es el mismo que el taller del jueves, es así que pueden esc
 
 **(4). Grabaciones:** Estarán hospedadas en Google Drive. 
 
-**Instrucciones de uso del repositorio:** Cada carpeta principal (Ej: *01RegresionLinealSimple*) contiene otras dos carpetas (Taller y Solución). En particular, la carpeta de solución que es la que más interesa, contiene la siguiente información:
+**Instrucciones de uso del repositorio:** Cada carpeta principal (Ej: *01RegresionLinealMultiple*) contiene otras dos carpetas (Taller y Solución). En particular, la carpeta de solución que es la que más interesa, contiene la siguiente información:
 - Solucion.R **(Código usado en el taller sin personalizaciones gráficas)**
 - Solucion.Rmd **(Código usado en el taller con personalizaciones gráficas, tablas y contenido para crear un PDF)**
 - Solucion.pdf **(Archivo PDF con el código base usado en la sesión y sus gráficas)**
