@@ -1,6 +1,6 @@
 # Repositorio del curso Estadística II
 
-En este repositorio de encuentra la información asociada al curso de *Estadística II* de la **Universidad Nacional de Colombia, sede Medellín**, para el periodo académico 2024 - II, 2025- I y 2025- II. El curso tiene como objetivo general, **conocer y profundizar** en los fundamentos básicos, propiedades y aplicaciones de los **modelos de regresión lineal**, **regresión logística** y de los elementos del **muestreo estadístico**. El curso tiene una orientación teórico- práctica. Es de especial interés tener en cuenta la siguiente información:**
+En este repositorio de encuentra la información asociada al curso de *Estadística II* de la **Universidad Nacional de Colombia, sede Medellín**, para el periodo académico 2024 - II, 2025- I y 2025- II. El curso tiene como objetivo general, **conocer y profundizar** en los fundamentos básicos, propiedades y aplicaciones de los **modelos de regresión lineal**, **regresión logística** y de los elementos del **muestreo estadístico**. El curso tiene una orientación teórico- práctica. Es de especial interés tener en cuenta la siguiente información:
 
 **(1). Talleres prácticos:** Se realizarán dos talleres prácticos semanales. El objetivo es profundizar los conocimientos adquiridos en el aula, por lo que es recomendable asistir con una base teórica decente 😄. El horario de cada taller es el siguiente:
 
