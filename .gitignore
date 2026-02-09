@@ -1,0 +1,28 @@
+# RStudio
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# Knitr / R Markdown
+_cache/
+figs/
+*_files/
+*.knit.md
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Datos procesados temporales
+Limpieza/
+
+# Sistema
+.DS_Store
+Thumbs.db
+01RegresionLinealMultiple/01PrimerTaller/Solucion01.R
