@@ -7,9 +7,9 @@ En este repositorio de encuentra la información asociada al curso de *Estadíst
 - **Lunes: (Presencial).** Bloque 14 Salón 302. (10:00- 12:00)
 - **Sábado: (Virtual).** A través de Google Meet. (10:00- 12:00)
 
-El taller del lunes es el mismo que el taller del jueves, es así que pueden escoger el día preferido. 
+El taller del lunes es el mismo que el taller del sábado, de tal manera que pueden escoger el día preferido. 
 
-**(2). Conocimientos previos:** Estadística I, en particular, pruebas de hipótesis e intervalos de confianza (muy importantes). Es deseable también conocimientos básicos de programación en R. Se recomienda RStudio como IDE. Una guía simple de instalación es la siguiente: https://www.youtube.com/watch?v=hbgzW3Cvda4
+**(2). Conocimientos previos:** Estadística I, en particular, pruebas de hipótesis e intervalos de confianza (muy importantes). Es deseable también conocimientos básicos en álgebra lineal y de programación en R. Se recomienda RStudio como IDE. Una guía simple de instalación es la siguiente: https://www.youtube.com/watch?v=hbgzW3Cvda4
 
 **(3). Medios de comunicación:** (torodriguezt@unal.edu.co)
 
