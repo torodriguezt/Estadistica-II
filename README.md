@@ -13,7 +13,7 @@ El taller del lunes es el mismo que el taller del sábado, de tal manera que pue
 
 **(3). Medios de comunicación:** (torodriguezt@unal.edu.co)
 
-**(4). Grabaciones:** Estarán hospedadas en Google Drive [Enlace meet](https://drive.google.com/drive/folders/1y4_9sj74vLJJHkjjSHci1LKpp5o3jQ0x?usp=sharin[g). 
+**(4). Grabaciones:** Estarán hospedadas en Google Drive [Enlace Drive](https://drive.google.com/drive/folders/1y4_9sj74vLJJHkjjSHci1LKpp5o3jQ0x?usp=sharin[g). 
 
 **Instrucciones de uso del repositorio:** Cada carpeta principal (Ej: *01RegresionLinealMultiple*) contiene otras dos carpetas (Taller y Solución). En particular, la carpeta de solución que es la que más interesa, contiene la siguiente información:
 - Solucion.R **(Código usado en el taller sin personalizaciones gráficas)**
