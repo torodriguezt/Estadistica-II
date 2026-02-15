@@ -1,4 +1,4 @@
-datos <- read.csv("../data/imcv_modelo_limpio.csv")
+datos <- read.csv("01RegresionLinealMultiple/01PrimerTaller/data/imcv_modelo_limpio.csv") #Modifique segun donde se encuentre
 
 head(datos)
 
