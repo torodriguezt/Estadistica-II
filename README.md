@@ -11,9 +11,9 @@ El taller del lunes es el mismo que el taller del sábado, de tal manera que pue
 
 **(2). Conocimientos previos:** Estadística I, en particular, pruebas de hipótesis e intervalos de confianza (muy importantes). Es deseable también conocimientos básicos en álgebra lineal y de programación en R. Se recomienda RStudio como IDE. Una guía simple de instalación es la siguiente: https://www.youtube.com/watch?v=hbgzW3Cvda4
 
-**(3). Medios de comunicación:** (torodriguezt@unal.edu.co)
+**(3). Medios de comunicación:** torodriguezt@unal.edu.co
 
-**(4). Grabaciones:** Estarán hospedadas en Google Drive [Enlace Drive](https://drive.google.com/drive/folders/1y4_9sj74vLJJHkjjSHci1LKpp5o3jQ0x?usp=sharin[g). 
+**(4). Grabaciones:** Estarán hospedadas en Google Drive. [Enlace Drive](https://drive.google.com/drive/folders/1y4_9sj74vLJJHkjjSHci1LKpp5o3jQ0x?usp=sharin[g). 
 
 **Instrucciones de uso del repositorio:** Cada carpeta principal (Ej: *01RegresionLinealMultiple*) contiene otras dos carpetas (Taller y Solución). En particular, la carpeta de solución que es la que más interesa, contiene la siguiente información:
 - Solucion.R **(Código usado en el taller sin personalizaciones gráficas)**
