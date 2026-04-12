@@ -1,0 +1,1844 @@
+---
+title: "Repaso Primer Parcial — Estadística II"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+## Motivación de estudio
+
+El análisis de regresión es una de las herramientas fundamentales de la estadística: permite realizar tanto **inferencia** como **predicción** sobre un fenómeno dentro del rango experimental observado. Aunque el modelo de regresión lineal simple es quizás el modelo estadístico más elemental, su generalización, el **modelo lineal**, constituye la base de muchos de los métodos más poderosos que existen en estadística y *Machine Learning*. Comprender bien la regresión múltiple no solo es esencial para el análisis de datos a nivel básico, sino que abre la puerta a métodos intermedios y avanzados que comparten la misma estructura algebraica.
+
+Con esto como motivación, el presente notebook busca servir como **material de repaso** tras la interrupción académica del semestre 2026-1 en la Universidad Nacional de Colombia. Se recomienda acompañar este repaso con el archivo `.ipynb` disponible en el GitHub del curso, donde se presentan casos complementarios del uso de modelos lineales implementados en Python. **El contenido de ese archivo no hace parte de la evaluación del curso**, pero sí ofrece perspectiva sobre la conexión entre regresión y modelos más avanzados, que pueden resultar interesantes.
+
+------------------------------------------------------------------------
+
+## 1. Regresión lineal simple: recordatorio
+
+Se utilizará el caso de la regresión lineal simple como manera de ilustrar conceptos básicos del análisis de regresión, recuerde que la regresión lineal simple es un caso especial de la regresión lineal múltiple.
+Suponga que se cuenta con una variable de interés $y$ (puede ser de naturaleza ecológica, demográfica, económica, etc.) y una variable adicional $x$ que está correlacionada con ella. De manera formal, a $x$ la llamaremos **variable predictora** o **covariable**. Podemos modelar la relación entre ambas de la siguiente forma:
+
+$$
+y_i = \beta_0 + \beta_1 \, x_i + \varepsilon_i, \quad i = 1, \dots, n
+$$
+
+donde:
+
+-   $\beta_0$ es el **intercepto**: el valor esperado de $y$ cuando $x = 0$.
+-   $\beta_1$ es la **pendiente**: el cambio esperado en $y$ por cada unidad de cambio en $x$. Este es el parámetro de interés principal.
+-   $\varepsilon_i$ son los **errores** del modelo, asociados a la variabilidad no explicada por la relación lineal. Estos errores no son directamente observables.
+
+Se asume típicamente que $\varepsilon_i \overset{iid}{\sim} N(0, \sigma^2)$.
+
+Nuestro objetivo es **estimar** los parámetros desconocidos $\beta_0$ y $\beta_1$ a partir de los datos observados $(x_1, y_1), \dots, (x_n, y_n)$. Los dos métodos de estimación más conocidos son el de **Mínimos Cuadrados Ordinarios (MCO)** y el de **Máxima Verosimilitud (MV)**.
+
+------------------------------------------------------------------------
+
+### 1.1 Estimación por Mínimos Cuadrados Ordinarios (MCO)
+
+El método de mínimos cuadrados ordinarios es un método geométrico que, intuitivamente, busca minimizar la distancia entre una función ajustada y los datos observados. La idea de MCO es encontrar los valores de $\beta_0$ y $\beta_1$ que **minimizan la suma de los errores al cuadrado**:
+
+$$
+S(\beta_0, \beta_1) = \sum_{i=1}^{n} \varepsilon_i^2 = \sum_{i=1}^{n} (y_i - \beta_0 - \beta_1 x_i)^2
+$$
+
+Derivando $S$ con respecto a $\beta_0$ y $\beta_1$ e igualando a cero, se obtienen las **ecuaciones normales**:
+
+$$
+\frac{\partial S}{\partial \beta_0} = -2 \sum_{i=1}^{n} (y_i - \beta_0 - \beta_1 x_i) = 0
+$$
+
+$$
+\frac{\partial S}{\partial \beta_1} = -2 \sum_{i=1}^{n} x_i (y_i - \beta_0 - \beta_1 x_i) = 0
+$$
+
+Resolviendo este sistema, los estimadores MCO son:
+
+$$
+\boxed{\hat{\beta}_1 = \frac{\sum_{i=1}^{n}(x_i - \bar{x})(y_i - \bar{y})}{\sum_{i=1}^{n}(x_i - \bar{x})^2} = \frac{S_{xy}}{S_{xx}}}
+$$
+
+$$
+\boxed{\hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x}}
+$$
+
+donde $\bar{x} = \frac{1}{n}\sum x_i$, $\bar{y} = \frac{1}{n}\sum y_i$, $S_{xy} = \sum(x_i - \bar{x})(y_i - \bar{y})$ y $S_{xx} = \sum(x_i - \bar{x})^2$.
+
+**Nota:** Estos estimadores no requieren el supuesto de normalidad, solo que el modelo sea lineal y los errores tengan media cero y varianza constante.
+
+#### Ejemplo numérico: MCO a mano
+
+Suponga que se tienen $n = 5$ observaciones sobre las horas de estudio ($x$) y la calificación obtenida ($y$):
+
+| $i$ | $x_i$ | $y_i$ |
+|-----|--------|--------|
+| 1   | 1      | 2.5    |
+| 2   | 2      | 3.8    |
+| 3   | 3      | 5.2    |
+| 4   | 4      | 6.1    |
+| 5   | 5      | 8.4    |
+
+Calculamos las cantidades necesarias:
+
+$$
+\bar{x} = \frac{1+2+3+4+5}{5} = 3, \qquad \bar{y} = \frac{2.5+3.8+5.2+6.1+8.4}{5} = 5.2
+$$
+
+$$
+S_{xy} = \sum(x_i - \bar{x})(y_i - \bar{y}) = (-2)(-2.7) + (-1)(-1.4) + (0)(0) + (1)(0.9) + (2)(3.2) = 5.4 + 1.4 + 0 + 0.9 + 6.4 = 14.1
+$$
+
+$$
+S_{xx} = \sum(x_i - \bar{x})^2 = 4 + 1 + 0 + 1 + 4 = 10
+$$
+
+Entonces:
+
+$$
+\hat{\beta}_1 = \frac{S_{xy}}{S_{xx}} = \frac{14.1}{10} = 1.41
+$$
+
+$$
+\hat{\beta}_0 = \bar{y} - \hat{\beta}_1\bar{x} = 5.2 - 1.41 \times 3 = 0.97
+$$
+
+El modelo ajustado es: $\hat{y} = 0.97 + 1.41x$. Es decir, **por cada hora adicional de estudio, la calificación aumenta en promedio 1.41 puntos**.
+
+Verifiquemos en R:
+
+```{r}
+x <- c(1, 2, 3, 4, 5)
+y <- c(2.5, 3.8, 5.2, 6.1, 8.4)
+modelo_simple <- lm(y ~ x)
+summary(modelo_simple)
+```
+
+```{r, fig.width=8, fig.height=5.5}
+par(mar = c(5, 4.5, 3, 1))
+plot(x, y, pch = 19, col = "steelblue", cex = 1.8,
+     xlab = "Horas de estudio", ylab = "Calificación",
+     main = "Regresión lineal simple: Horas vs Calificación",
+     las = 1, bty = "l")
+
+# Línea ajustada
+abline(modelo_simple, col = "tomato", lwd = 2.5)
+
+# Segmentos de residuos (para visualizar lo que minimiza MCO)
+y_hat <- fitted(modelo_simple)
+segments(x, y, x, y_hat, col = rgb(0.5, 0.5, 0.5, 0.5), lty = 2, lwd = 1.2)
+
+# Re-dibujar puntos encima de los segmentos
+points(x, y, pch = 19, col = "steelblue", cex = 1.8)
+
+# Ecuación del modelo
+coefs_s <- round(coef(modelo_simple), 2)
+text(1.2, max(y) - 0.2,
+     bquote(hat(y) == .(coefs_s[1]) + .(coefs_s[2]) * x),
+     cex = 0.95, adj = 0, col = "gray20")
+
+legend("bottomright",
+       legend = c("Datos observados", "Recta ajustada (MCO)", "Residuos"),
+       col = c("steelblue", "tomato", "gray50"),
+       pch = c(19, NA, NA),
+       lty = c(NA, 1, 2),
+       lwd = c(NA, 2.5, 1.2),
+       pt.cex = c(1.8, NA, NA),
+       bty = "n", cex = 0.85)
+```
+
+------------------------------------------------------------------------
+
+### 1.2 Estimación por Máxima Verosimilitud (MV)
+
+El método de verosimilitud lo que busca es maximizar la función de verosimilitud, de tal manera que el parámetro que obtenemos sea el que nos da una mayor probabilidad de que nuestro modelo propuesto haya generado esos datos. Bajo el supuesto de normalidad $\varepsilon_i \sim N(0, \sigma^2)$, cada observación tiene distribución:
+
+$$
+y_i \mid x_i \sim N(\beta_0 + \beta_1 x_i, \, \sigma^2)
+$$
+
+La **función de verosimilitud** para la muestra completa es:
+
+$$
+L(\beta_0, \beta_1, \sigma^2) = \prod_{i=1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(y_i - \beta_0 - \beta_1 x_i)^2}{2\sigma^2}\right)
+$$
+
+Tomando el logaritmo natural (la **log-verosimilitud**):
+
+$$
+\ell(\beta_0, \beta_1, \sigma^2) = -\frac{n}{2}\ln(2\pi) - \frac{n}{2}\ln(\sigma^2) - \frac{1}{2\sigma^2}\sum_{i=1}^{n}(y_i - \beta_0 - \beta_1 x_i)^2
+$$
+
+Maximizar $\ell$ con respecto a $\beta_0$ y $\beta_1$ equivale a **minimizar** $\sum(y_i - \beta_0 - \beta_1 x_i)^2$, que es exactamente el criterio de MCO. Por lo tanto:
+
+$$
+\boxed{\hat{\beta}_1^{MV} = \hat{\beta}_1^{MCO} = \frac{S_{xy}}{S_{xx}}, \qquad \hat{\beta}_0^{MV} = \hat{\beta}_0^{MCO} = \bar{y} - \hat{\beta}_1\bar{x}}
+$$
+
+Es decir, **bajo normalidad, los estimadores de MV y MCO para los coeficientes de regresión coinciden**.
+
+La diferencia aparece en la estimación de la varianza. Derivando $\ell$ respecto a $\sigma^2$:
+
+$$
+\frac{\partial \ell}{\partial \sigma^2} = -\frac{n}{2\sigma^2} + \frac{1}{2\sigma^4}\sum_{i=1}^{n}(y_i - \hat{\beta}_0 - \hat{\beta}_1 x_i)^2 = 0
+$$
+
+Se obtiene el estimador MV de la varianza:
+
+$$
+\boxed{\hat{\sigma}^2_{MV} = \frac{1}{n}\sum_{i=1}^{n}\hat{\varepsilon}_i^2 = \frac{SCE}{n}}
+$$
+
+donde $\hat{\varepsilon}_i = y_i - \hat{\beta}_0 - \hat{\beta}_1 x_i$ son los **residuales** y $SCE = \sum \hat{\varepsilon}_i^2$ es la suma de cuadrados del error.
+
+$$
+\hat{\sigma}^2_{MCO} = \frac{SCE}{n - 2} = MSE
+$$
+
+Este es un estimador **insesgado** de $\sigma^2$, mientras que $\hat{\sigma}^2_{MV}$ es sesgado. Tenga en cuenta que para el caso de regresión lineal múltiple el denominador deja de ser $n-2$ y pasa a ser $n-p$ como se verá más adelante.
+
+
+------------------------------------------------------------------------
+
+## 2. Regresión lineal múltiple: generalizando lo anterior
+
+Ahora podemos generalizar todo lo anterior al caso donde no tenemos solo una variable predictora, sino que podemos tener todas las que queramos (o tengamos acceso). Para generalizar lo anterior, es útil representarlo de forma matricial, por lo que escribimos el modelo de regresión lineal múltiple de la siguiente manera:
+
+$$
+\mathbf{Y} = \mathbf{X}\beta + \mathbf{\epsilon}
+$$
+
+Donde las dimensiones de cada una de las variables son:
+
+$$
+\mathbf{Y} \in \mathcal{R}^{(n \times 1)}
+$$
+$$
+\mathbf{X} \in \mathcal{R}^{(n \times p)}
+$$
+
+
+$$
+\beta \in \mathcal{R}^{(p \times 1)}
+$$
+
+$$
+\epsilon \in {R}^{(n \times 1)}
+$$
+
+Sin embargo, debido a que los $\beta$ son desconocidos, pasaremos a estimarlos mediante la siguiente expresión, la cual se encuentra demostrada en la solución del taller 1. Este estimador es además un estimador insesgado.
+
+$$
+\hat{\beta} = (X^tX)^{-1} X^t y
+$$
+
+#### Ejemplo numérico: estimación matricial
+
+Retomemos el ejemplo anterior (horas de estudio vs calificación) y veamos cómo se obtiene $\hat{\beta}$ de forma matricial. La matriz de diseño $\mathbf{X}$ incluye una columna de unos para el intercepto:
+
+$$
+\mathbf{X} = \begin{pmatrix} 1 & 1 \\ 1 & 2 \\ 1 & 3 \\ 1 & 4 \\ 1 & 5 \end{pmatrix}, \qquad
+\mathbf{Y} = \begin{pmatrix} 2.5 \\ 3.8 \\ 5.2 \\ 6.1 \\ 8.4 \end{pmatrix}
+$$
+
+Calculamos paso a paso:
+
+$$
+X^tX = \begin{pmatrix} 1&1&1&1&1 \\ 1&2&3&4&5 \end{pmatrix} \begin{pmatrix} 1&1 \\ 1&2 \\ 1&3 \\ 1&4 \\ 1&5 \end{pmatrix} = \begin{pmatrix} 5 & 15 \\ 15 & 55 \end{pmatrix}
+$$
+
+$$
+X^tY = \begin{pmatrix} 1&1&1&1&1 \\ 1&2&3&4&5 \end{pmatrix} \begin{pmatrix} 2.5 \\ 3.8 \\ 5.2 \\ 6.1 \\ 8.4 \end{pmatrix} = \begin{pmatrix} 26.0 \\ 92.1 \end{pmatrix}
+$$
+
+$$
+(X^tX)^{-1} = \frac{1}{5 \cdot 55 - 15 \cdot 15} \begin{pmatrix} 55 & -15 \\ -15 & 5 \end{pmatrix} = \frac{1}{50}\begin{pmatrix} 55 & -15 \\ -15 & 5 \end{pmatrix} = \begin{pmatrix} 1.1 & -0.3 \\ -0.3 & 0.1 \end{pmatrix}
+$$
+
+$$
+\hat{\beta} = (X^tX)^{-1}X^tY = \begin{pmatrix} 1.1 & -0.3 \\ -0.3 & 0.1 \end{pmatrix}\begin{pmatrix} 26.0 \\ 92.1 \end{pmatrix} = \begin{pmatrix} 0.97 \\ 1.41 \end{pmatrix}
+$$
+
+Obtenemos los mismos valores: $\hat{\beta}_0 = 0.97$ y $\hat{\beta}_1 = 1.41$. Verifiquemos en R:
+
+```{r}
+X <- cbind(1, c(1,2,3,4,5))
+Y <- c(2.5, 3.8, 5.2, 6.1, 8.4)
+
+# Estimación matricial explícita
+beta_hat <- solve(t(X) %*% X) %*% t(X) %*% Y
+beta_hat
+```
+
+Ahora, pasemos a un ejemplo con **múltiples predictoras** usando el dataset `mtcars` de R. Modelaremos el rendimiento de combustible (`mpg`) en función del peso (`wt`) y la potencia (`hp`):
+
+```{r}
+# Ajuste del modelo de regresión múltiple
+modelo_mult <- lm(mpg ~ wt + hp, data = mtcars)
+summary(modelo_mult)
+```
+
+Interpretación de los coeficientes:
+
+- $\hat{\beta}_0 \approx 37.23$: el rendimiento esperado cuando $wt = 0$ y $hp = 0$ (no interpretable en la práctica, pues un auto con peso y potencia cero no existe).
+- $\hat{\beta}_{wt} \approx -3.88$: **manteniendo la potencia constante**, por cada 1000 libras adicionales de peso, el rendimiento disminuye en promedio 3.88 millas por galón.
+- $\hat{\beta}_{hp} \approx -0.03$: **manteniendo el peso constante**, por cada caballo de fuerza adicional, el rendimiento disminuye en promedio 0.03 millas por galón.
+
+Verifiquemos la estimación matricial para este modelo:
+
+```{r}
+X_mt <- model.matrix(~ wt + hp, data = mtcars)  # Matriz de diseño
+Y_mt <- mtcars$mpg
+
+# Estimación matricial
+beta_mt <- solve(t(X_mt) %*% X_mt) %*% t(X_mt) %*% Y_mt
+beta_mt
+```
+
+La matriz de varianzas y covarianzas de este estimador esta dada por:
+$$
+var(\hat{\beta}) = \sigma^2 (X^tX)^{-1}
+$$
+En la diagonal principal se encuentran las varianzas de los estimadores $Var(\hat{\beta}_j) = \hat{\sigma}^2 c_{jj}$, donde $c_{jj}$ es el j-ésimo elemento de la diagonal de la matriz $(X^tX)^{-1}$.
+
+```{r}
+# Matriz (X'X)^{-1}
+XtX_inv <- solve(t(X_mt) %*% X_mt)
+
+# Estimación de sigma^2 (MSE)
+e <- Y_mt - X_mt %*% beta_mt
+n <- nrow(mtcars)
+p <- ncol(X_mt)
+sigma2_hat <- sum(e^2) / (n - p)
+
+# Matriz de varianzas-covarianzas de beta_hat
+var_beta <- sigma2_hat * XtX_inv
+var_beta
+
+# Los errores estándar son la raíz de la diagonal
+sqrt(diag(var_beta))
+```
+
+Compare estos errores estándar con los que aparecen en la columna `Std. Error` del `summary(modelo_mult)`.
+
+$$
+\operatorname{Var}(\boldsymbol{\beta}) =
+\begin{pmatrix}
+\operatorname{Var}(\beta_0) & \operatorname{Cov}(\beta_0,\beta_1) & \cdots & \operatorname{Cov}(\beta_0,\beta_k) \\
+\operatorname{Cov}(\beta_1,\beta_0) & \operatorname{Var}(\beta_1) & \cdots & \operatorname{Cov}(\beta_1,\beta_k) \\
+\vdots & \vdots & \ddots & \vdots \\
+\operatorname{Cov}(\beta_k,\beta_0) & \operatorname{Cov}(\beta_k,\beta_1) & \cdots & \operatorname{Var}(\beta_k)
+\end{pmatrix}
+$$
+Debido a que los $\hat{\beta}$ son una combinación lineal de las observaciones, se tiene la siguiente distribución:
+
+$$
+\hat{\boldsymbol{\beta}} \sim \mathcal{N} \left(
+\boldsymbol{\beta}, \; \sigma^2 (X^\top X)^{-1}
+\right)
+$$
+Y para cada uno de los $\beta_j$:
+
+$$
+\hat{\beta}_j \sim \mathcal{N} \left(
+\beta_j, \; \sigma^2 c_{jj}
+\right), \quad j = 0, 1, \ldots, k.
+$$
+
+Al estimar los $\beta$, nuestro modelo de regresión lineal múltiple queda escrito de la siguiente manera:
+
+$$
+\hat{\mathbf{Y}} = \mathbf{X}\hat{\beta}
+$$
+Bajo lo anterior, establecemos la respuesta media de la siguiente manera:
+
+$$
+E(Y \mid X_1, X_2, \ldots, X_k) = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_k X_k
+$$
+
+Bajo los supuestos de normalidad, independencia y varianza constante de los errores, se tiene que:
+
+$$
+Y_i \mid X_{i1}, \dots, X_{ik} \stackrel{ind}{\sim} N\left(\beta_0 + \beta_1 X_{i1} + \dots + \beta_k X_{ik}, \sigma^2\right), \quad i = 1, 2, \dots, n
+$$
+Una de las ventajes del modelo de regresión lineal, es que es altamente interpretable, de manera general, la interpretación de los parámetros se da de la siguiente manera:
+
+\begin{itemize}
+\item Para $\beta_0$: Es solo interpretable si en los datos se encuentra la coordenada $(X_1, X_2, ..., X_k) = (0, 0, ..., 0)$
+\item Para $\beta_j$: Indican el cambio en la respuesta media (promedio) de $Y$ por unidad de incremento en la respectiva variable $X_j$ al mantener las demás predictoras constantes
+\end{itemize}
+
+Ya que tenemos entonces una expresión para estimar los betas, observe lo siguiente
+
+$$
+\hat{y} = X\hat{\beta} = X(X^tX)^{-1}X^ty = Hy
+$$
+$H$ recibe el nombre de la matriz hat, y es aquella que proyecta el vector de observaciones $y$, en el plano ajustado, es decir, es una transformación lineal sobre las filas de $X$. Esta matriz H es simétrica e idempotente (ver demostración en el taller 2)
+
+
+Con el modelo de regresión lineal ajustado, podemos cuantificar cuanto nos equivocamos entre lo que observamos y lo que ajustamos, esa cantidad recibirá el nombre de residuos, la estimación de los errores, los cuales se calculan de la siguiente manera:
+
+$$
+\mathbf{e} = \mathbf{y} - \hat{\mathbf{y}} = \mathbf{y} - \mathbf{X}\hat{\beta}
+$$
+Podemos expresar los errores en términos de la matriz $H$ de la siguiente manera
+
+$$
+\mathbf{e} = \mathbf{y} - \hat{\mathbf{y}} = \mathbf{y} - Hy = (I-H)y
+$$
+
+### ANOVA: Análisis de varianza
+
+Al plantear un modelo de regresión lineal, es interesante ver si al menos alguna de las predictoras si aporta a exlicar la variable respuesta, o ninguna es estadísticamente diferente de 0, por lo cual se plantea el test lineal general, bajo el siguiente juego de hipótesis:
+
+$$
+H_0: \beta_1 = \beta_2 = ... = \beta_k = 0
+\\
+H_a : \text{Al menos algún de los } B_j \ne 0, j = 1, 2, ..., k 
+$$
+Para probar la hipótesis anterior utilizamos el análisis de varianza (ANOVA), para lo cual vamos a descomponer las sumas de cuadrados del modelo ajustado
+
+$$
+\underbrace{\sum_{i=1}^{n} (y_i - \bar{y})^2}_{SS_{Total}} = \underbrace{\sum_{i=1}^{n} (\hat{y}_i - \bar{y})^2}_{SS_{Regresión}} + \underbrace{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}_{SS_{Error}}
+$$
+
+$$
+SS_{Total} = SS_{Regresión} + SS_{Error}
+$$
+
+
+\begin{itemize}
+\item SST: Mide la dispersión total de los datos.
+\item SSR: Mide cuánto de la variación total es explicada por la recta de regresión.
+\item SSE: Mide la discrepancia entre los datos observados y las predicciones del modelo (el residuo).
+\end{itemize}
+
+Cada suma de cuadrados tiene asociados unos **grados de libertad** (g.l.):
+
+| Fuente | Suma de Cuadrados | g.l. | Cuadrado Medio | $F_0$ |
+|--------|-------------------|------|----------------|-------|
+| Regresión | $SSR$ | $k$ | $MSR = \dfrac{SSR}{k}$ | $F_0 = \dfrac{MSR}{MSE}$ |
+| Error | $SSE$ | $n - p$ | $MSE = \dfrac{SSE}{n - p}$ | |
+| Total | $SST$ | $n - 1$ | | |
+
+donde $p = k + 1$ (número de parámetros incluyendo el intercepto). La identidad de grados de libertad es: $(n-1) = k + (n-p)$.
+
+El **estadístico de prueba** para el test de significancia general es:
+
+$$
+\boxed{F_0 = \frac{MSR}{MSE} = \frac{SSR / k}{SSE / (n-p)}}
+$$
+
+Bajo $H_0$, este estadístico sigue una distribución $F_{k, \, n-p}$. Se rechaza $H_0$ si $F_0 > f_{1-\alpha;\, k,\, n-p}$, o equivalentemente si el valor-$p$ asociado es menor que $\alpha$.
+
+#### Ejemplo: tabla ANOVA con `mtcars`
+
+Retomemos el modelo `mpg ~ wt + hp`:
+
+```{r}
+anova(modelo_mult)
+```
+
+Calculemos el estadístico $F_0$ manualmente a partir de las sumas de cuadrados:
+
+```{r}
+Y_m <- mtcars$mpg
+y_hat <- fitted(modelo_mult)
+y_bar <- mean(Y_m)
+
+SST <- sum((Y_m - y_bar)^2)
+SSR <- sum((y_hat - y_bar)^2)
+SSE <- sum((Y_m - y_hat)^2)
+
+cat("SST =", round(SST, 2), "\n")
+cat("SSR =", round(SSR, 2), "\n")
+cat("SSE =", round(SSE, 2), "\n")
+cat("SST = SSR + SSE?", round(SST, 2) == round(SSR + SSE, 2), "\n\n")
+
+k <- 2        # número de predictoras (wt, hp)
+n <- nrow(mtcars)
+p <- k + 1    # parámetros totales (intercepto + wt + hp)
+
+MSR <- SSR / k
+MSE <- SSE / (n - p)
+
+F0 <- MSR / MSE
+valor_p <- 1 - pf(F0, df1 = k, df2 = n - p)
+
+cat("MSR =", round(MSR, 2), "\n")
+cat("MSE =", round(MSE, 2), "\n")
+cat("F0  =", round(F0, 2), "\n")
+cat("valor-p =", format.pval(valor_p), "\n")
+```
+
+Compare este resultado con el que aparece al final del `summary(modelo_mult)`:
+
+```{r}
+summary(modelo_mult)
+```
+
+------------------------------------------------------------------------
+
+### Prueba de significancia individual
+
+Una vez evaluada la significancia general del modelo, es de interés evaluar cuáles de las variables predictoras contribuyen de manera individual. Para realizar inferencia sobre los $\beta$ planeamos la siguiente prueba de hipótesis.
+
+$$
+H_0 : \beta_j = 0 \\
+H_a : \beta_j \ne 0
+$$
+
+Es decir, se evalúa si la variable $X_j$ tiene un efecto estadísticamente significativo sobre $Y$, controlando por las demás variables. Dicha prueba de hipótesis se evalúa mediante el siguiente estadístico de prueba:
+
+$$
+T_0 = \frac{\hat{\beta}_j}{se(\hat{\beta}_j)} = \frac{\hat{\beta}_j}{\sqrt{\hat{\sigma}^2 c_{jj}}}
+$$
+
+Bajo $H_0$, este estadístico sigue una distribución $t_{n-p}$. Se rechaza $H_0$ si $|T_0| > t_{\alpha/2, \, n-p}$.
+
+**Nota:** De manera más general, si se quiere contrastar $H_0: \beta_j = \beta_j^0$ (un valor específico distinto de cero), el estadístico es:
+
+$$
+T_0 = \frac{\hat{\beta}_j - \beta_j^0}{se(\hat{\beta}_j)}
+$$
+
+
+#### Ejemplo: prueba t individual con `mtcars`
+
+Retomemos el modelo `mpg ~ wt + hp`. Queremos evaluar si el peso (`wt`) tiene un efecto significativo sobre el rendimiento, controlando por la potencia. Es decir:
+
+$$
+H_0: \beta_{wt} = 0 \quad \text{vs} \quad H_a: \beta_{wt} \ne 0
+$$
+
+```{r}
+# Extraemos lo necesario del modelo ajustado anteriormente
+coefs <- summary(modelo_mult)$coefficients
+coefs
+```
+
+Verifiquemos el cálculo del estadístico $T_0$ manualmente:
+
+```{r}
+beta_wt <- coefs["wt", "Estimate"]
+se_wt   <- coefs["wt", "Std. Error"]
+
+T0 <- beta_wt / se_wt
+T0
+
+# Valor crítico al 5% con n - p grados de libertad
+n <- nrow(mtcars)
+p <- 3  # intercepto + wt + hp
+alpha <- 0.05
+t_critico <- qt(1 - alpha/2, df = n - p)
+t_critico
+
+# ¿Rechazamos H0?
+abs(T0) > t_critico
+```
+
+Como $|T_0| \approx 5.95 > t_{0.025, \, 29} \approx 2.045$, rechazamos $H_0$: hay evidencia estadística de que el peso del auto tiene un efecto significativo sobre el rendimiento, aun controlando por la potencia. Observe que este valor coincide con el que aparece en la columna `t value` del `summary()`.
+
+------------------------------------------------------------------------
+
+### Coeficiente de determinación $R^2$
+
+El coeficiente de determinación mide la **proporción de la variabilidad total de $Y$ que es explicada por el modelo de regresión**:
+
+$$
+\boxed{R^2 = \frac{SSR}{SST} = 1 - \frac{SSE}{SST}}
+$$
+
+donde $0 \le R^2 \le 1$. Un valor cercano a 1 indica que el modelo explica una gran proporción de la variabilidad observada.
+
+Sin embargo, el $R^2$ tiene un problema: **nunca disminuye al agregar más variables** al modelo, incluso si estas no son relevantes. Por esta razón se define el **$R^2$ ajustado**, que penaliza la inclusión de variables innecesarias:
+
+$$
+\boxed{R^2_{adj} = 1 - \frac{SSE/(n-p)}{SST/(n-1)} = 1 - \frac{MSE}{MST}}
+$$
+
+A diferencia del $R^2$, el $R^2_{adj}$ **puede disminuir** si se agrega una variable que no mejora el ajuste del modelo lo suficiente como para compensar la pérdida de un grado de libertad.
+
+#### Ejemplo: $R^2$ y $R^2_{adj}$ con `mtcars`
+
+```{r}
+# R^2 manual
+R2 <- SSR / SST
+cat("R² =", round(R2, 4), "\n")
+
+# R^2 ajustado manual
+R2_adj <- 1 - (SSE / (n - p)) / (SST / (n - 1))
+cat("R² ajustado =", round(R2_adj, 4), "\n")
+```
+
+Estos valores coinciden con los reportados en `summary(modelo_mult)`.
+
+Ahora, veamos qué pasa si agregamos una variable que **no aporta información** al modelo. Agreguemos `am` (transmisión manual o automática):
+
+```{r}
+modelo_ext <- lm(mpg ~ wt + hp + am, data = mtcars)
+
+cat("Modelo original (wt + hp):\n")
+cat("  R²     =", round(summary(modelo_mult)$r.squared, 4), "\n")
+cat("  R² adj =", round(summary(modelo_mult)$adj.r.squared, 4), "\n\n")
+
+cat("Modelo extendido (wt + hp + am):\n")
+cat("  R²     =", round(summary(modelo_ext)$r.squared, 4), "\n")
+cat("  R² adj =", round(summary(modelo_ext)$adj.r.squared, 4), "\n")
+```
+
+Observe que el $R^2_{adj}$ puede disminuir si la variable agregada no compensa la pérdida de un grado de libertad. Este es el motivo por el cual el $R^2_{adj}$ es preferible para **comparar modelos** con distinto número de predictoras.
+
+------------------------------------------------------------------------
+
+### Sumas de cuadrados extra
+
+También puede que el interés no radique en evaluar la significancia general del modelo de regresión, sino de un subconjunto de parámetros. Una **suma de cuadrados extra** ($SS_{extra}$) mide la reducción marginal en $SSE$ (o equivalentemente el incremento marginal en $SSR$) producida por uno o varios coeficientes de regresión, dado que los otros coeficientes ya están presentes en el modelo.
+
+Para entender cómo es que esa suma de cuadrados extra nos permite cuantificar cuánto mejora el modelo, hay que entender que el $SST$ de un modelo no cambia según qué variable se agregue o se quite, siempre será el mismo; sin embargo, lo que aportan el $SSR$ y el $SSE$ para el mismo sí varía.
+
+Para definir una $SS_{extra}$ se necesitan dos subconjuntos:
+
+- **$A$**: el subconjunto de coeficientes de regresión del que se quiere obtener la $SS_{extra}$.
+- **$B$**: el subconjunto de coeficientes de regresión que acompañan a $A$ en el modelo.
+
+Se debe cumplir que $A \cup B$ esté incluido en el conjunto de todos los coeficientes de regresión del modelo, y que $A \cap B = \emptyset$.
+
+La suma de cuadrados extra del subconjunto $A$ dado $B$ se denota y calcula como:
+
+$$
+\boxed{SSR(A \mid B) = SSR(A \cup B) - SSR(B) = SSE(B) - SSE(A \cup B)}
+$$
+
+Es decir, se compara un **modelo completo** (que incluye $A \cup B$) contra un **modelo reducido** (que solo incluye $B$).
+
+#### Ejemplos de notación
+
+Suponga el modelo $Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 X_3 + \varepsilon$. Algunas sumas de cuadrados extra son:
+
+1. La contribución de $\beta_1$ dado que $\beta_0, \beta_2, \beta_3$ ya están en el modelo:
+
+$$
+SSR(\beta_1 \mid \beta_0, \beta_2, \beta_3) = SSR(\beta_0, \beta_1, \beta_2, \beta_3) - SSR(\beta_0, \beta_2, \beta_3) = SSE(\beta_0, \beta_2, \beta_3) - SSE(\beta_0, \beta_1, \beta_2, \beta_3)
+$$
+
+2. La contribución conjunta de $\beta_1$ y $\beta_2$ dado que $\beta_0, \beta_3$ ya están:
+
+$$
+SSR(\beta_1, \beta_2 \mid \beta_0, \beta_3) = SSR(\beta_0, \beta_1, \beta_2, \beta_3) - SSR(\beta_0, \beta_3) = SSE(\beta_0, \beta_3) - SSE(\beta_0, \beta_1, \beta_2, \beta_3)
+$$
+
+3. La contribución de $\beta_1$ dado que solo $\beta_0, \beta_3$ están:
+
+$$
+SSR(\beta_1 \mid \beta_0, \beta_3) = SSR(\beta_0, \beta_1, \beta_3) - SSR(\beta_0, \beta_3) = SSE(\beta_0, \beta_3) - SSE(\beta_0, \beta_1, \beta_3)
+$$
+
+------------------------------------------------------------------------
+
+### Prueba de significancia de un subconjunto de coeficientes
+
+Si se desea probar si un subconjunto $A$ de coeficientes es significativo dado que $B$ ya está en el modelo:
+
+$$
+H_0: \beta_j = 0 \;\; \forall \; \beta_j \in A \qquad \text{vs.} \qquad H_a: \text{algún } \beta_j \ne 0, \; \beta_j \in A
+$$
+
+Los **grados de libertad** de la $SS_{extra}$ son iguales al tamaño del subconjunto $A$, es decir, al número de coeficientes que se están probando. Equivalentemente:
+
+$$
+g.l.\left(SSR(A \mid B)\right) = g.l.\left(SSR(A \cup B)\right) - g.l.\left(SSR(B)\right) = g.l.\left(SSE(B)\right) - g.l.\left(SSE(A \cup B)\right)
+$$
+
+El **cuadrado medio extra** es:
+
+$$
+MSR(A \mid B) = \frac{SSR(A \mid B)}{|A|}
+$$
+
+donde $|A|$ es el número de coeficientes en $A$. El **estadístico de prueba** es:
+
+$$
+\boxed{F_0 = \frac{MSR(A \mid B)}{MSE_{\text{completo}}} = \frac{SSR(A \mid B) / |A|}{MSE_{\text{completo}}}}
+$$
+
+donde $MSE_{\text{completo}}$ es **siempre** el cuadrado medio del error del modelo completo ($A \cup B$). Bajo $H_0$:
+
+$$
+F_0 \sim F_{|A|, \; n - p_{\text{completo}}}
+$$
+
+Se rechaza $H_0$ si $F_0 > f_{1-\alpha;\, |A|, \, n - p_{\text{completo}}}$.
+
+#### Ejemplo concreto de notación
+
+En el modelo $Y = \beta_0 + \beta_1X_1 + \beta_2X_2 + \beta_3X_3 + \beta_4X_4 + \beta_5X_5 + \varepsilon$, para probar:
+
+$$
+H_0: \beta_1 = \beta_2 = \beta_5 = 0 \qquad \text{vs.} \qquad H_a: \text{algún } \beta_j \ne 0, \; j = 1, 2, 5
+$$
+
+Aquí $A = \{\beta_1, \beta_2, \beta_5\}$ y $B = \{\beta_0, \beta_3, \beta_4\}$. El estadístico es:
+
+$$
+F_0 = \frac{SSR(\beta_1, \beta_2, \beta_5 \mid \beta_0, \beta_3, \beta_4) / 3}{MSE_{\text{completo}}} \sim F_{3, \, n-6}
+$$
+
+Se rechaza $H_0$ si $F_0 > f_{1-\alpha;\, 3,\, n-6}$.
+
+------------------------------------------------------------------------
+
+### Caso particular: prueba individual vía $SS_{extra}$
+
+Cuando $A = \{\beta_j\}$ (un solo coeficiente), la prueba se reduce a:
+
+$$
+H_0: \beta_j = 0 \qquad \text{vs.} \qquad H_a: \beta_j \ne 0
+$$
+
+$$
+F_{j,0} = \frac{SSR(\beta_j \mid \beta_0, \beta_1, \ldots, \beta_{j-1}, \beta_{j+1}, \ldots, \beta_k)}{MSE}
+$$
+
+Dado que la $SS_{extra}$ tiene un solo grado de libertad, $F_{j,0} \sim F_{1, \, n-p}$ bajo $H_0$. Esta prueba es **equivalente a la prueba $t$ individual**:
+
+$$
+\boxed{F_{j,0} = T_{j,0}^2}
+$$
+
+y los valores-$p$ de ambas pruebas coinciden:
+
+$$
+P(F_{1, n-p} > F_{j,0}) = P(|t_{n-p}| > |T_{j,0}|)
+$$
+
+Además, la prueba de significancia general de la regresión (ANOVA) es un caso particular de la prueba de $SS_{extra}$ donde $A = \{\beta_1, \beta_2, \ldots, \beta_k\}$ y $B = \{\beta_0\}$.
+
+#### Ejemplo en R: sumas de cuadrados extra con `mtcars`
+
+Usemos el modelo completo `mpg ~ wt + hp + am + qsec` para ilustrar la prueba de un subconjunto de coeficientes. Probaremos si $\beta_{am}$ y $\beta_{qsec}$ son significativos de manera conjunta, dado que `wt` y `hp` ya están en el modelo:
+
+$$
+H_0: \beta_{am} = \beta_{qsec} = 0 \qquad \text{vs.} \qquad H_a: \text{algún } \beta_j \ne 0
+$$
+
+```{r}
+# Modelo completo (A ∪ B)
+completo <- lm(mpg ~ wt + hp + am + qsec, data = mtcars)
+
+# Modelo reducido (solo B)
+reducido <- lm(mpg ~ wt + hp, data = mtcars)
+
+# SSE de ambos modelos
+SSE_completo <- sum(residuals(completo)^2)
+SSE_reducido <- sum(residuals(reducido)^2)
+
+# Suma de cuadrados extra
+SS_extra <- SSE_reducido - SSE_completo
+
+# Grados de libertad
+A_size <- 2  # probamos am y qsec
+n <- nrow(mtcars)
+p_completo <- length(coef(completo))  # 5
+
+# Estadístico F
+MSE_completo <- SSE_completo / (n - p_completo)
+F0 <- (SS_extra / A_size) / MSE_completo
+valor_p <- 1 - pf(F0, df1 = A_size, df2 = n - p_completo)
+
+cat("SSE modelo reducido (wt + hp):            ", round(SSE_reducido, 2), "\n")
+cat("SSE modelo completo (wt + hp + am + qsec):", round(SSE_completo, 2), "\n")
+cat("SS_extra (am, qsec | wt, hp):             ", round(SS_extra, 2), "\n")
+cat("F0 =", round(F0, 4), "\n")
+cat("valor-p =", round(valor_p, 4), "\n")
+```
+
+Podemos verificar esto directamente con la función `anova()` comparando ambos modelos:
+
+```{r}
+anova(reducido, completo)
+```
+
+Ahora verifiquemos la equivalencia $F_{j,0} = T_{j,0}^2$ para un coeficiente individual. Tomemos $\beta_{wt}$ del modelo `mpg ~ wt + hp`:
+
+```{r}
+# Prueba t del summary
+coefs_mult <- summary(modelo_mult)$coefficients
+T0_wt <- coefs_mult["wt", "t value"]
+
+# Prueba F vía SS extra
+completo_2 <- lm(mpg ~ wt + hp, data = mtcars)
+reducido_2 <- lm(mpg ~ hp, data = mtcars)       # sin wt
+
+SSE_c <- sum(residuals(completo_2)^2)
+SSE_r <- sum(residuals(reducido_2)^2)
+SS_extra_wt <- SSE_r - SSE_c
+MSE_c <- SSE_c / (n - length(coef(completo_2)))
+F0_wt <- SS_extra_wt / MSE_c
+
+cat("T0² =", round(T0_wt^2, 4), "\n")
+cat("F0  =", round(F0_wt, 4), "\n")
+cat("¿Son iguales?", all.equal(T0_wt^2, F0_wt), "\n")
+```
+
+------------------------------------------------------------------------
+
+### Prueba de la hipótesis lineal general
+
+Todo lo anterior (prueba de significancia general, prueba de un subconjunto, prueba individual) puede unificarse bajo un mismo marco: la **prueba de hipótesis lineal general**.
+
+Suponga un modelo de RLM completo (FM) con $k$ variables predictoras:
+
+$$
+Y = \beta_0 + \beta_1 X_1 + \cdots + \beta_k X_k + \varepsilon
+$$
+
+con $SSR(FM)$ con $k = p-1$ g.l. y $SSE(FM)$ con $n-p$ g.l.
+
+Considere una matriz $\mathbf{L}$ de dimensión $m \times p$ de constantes, con $r \le m$ filas linealmente independientes, y un vector $\mathbf{c}$ de dimensión $m \times 1$. Se formula la **hipótesis lineal general**:
+
+$$
+\boxed{H_0: \mathbf{L}\boldsymbol{\beta} = \mathbf{c} \qquad \text{vs.} \qquad H_a: \mathbf{L}\boldsymbol{\beta} \ne \mathbf{c}}
+$$
+
+donde $\mathbf{L}\boldsymbol{\beta} = \mathbf{c}$ es un sistema de $m$ ecuaciones que se prueban simultáneamente. El caso más frecuente es $\mathbf{c} = \mathbf{0}$, pero la formulación general permite probar cualquier combinación lineal de los coeficientes contra valores arbitrarios.
+
+Al aplicar lo establecido en $H_0$ al modelo completo, se llega a un **modelo reducido** (RM). Se define la **suma de cuadrados debida a la hipótesis** ($SSH$):
+
+$$
+\boxed{SSH = SSE(RM) - SSE(FM) = SSR(FM) - SSR(RM)}
+$$
+
+con $r$ grados de libertad (el número de filas linealmente independientes de $\mathbf{L}$):
+
+$$
+r = g.l.\left(SSE(RM)\right) - g.l.\left(SSE(FM)\right) = g.l.\left(SSR(FM)\right) - g.l.\left(SSR(RM)\right)
+$$
+
+El **cuadrado medio debido a la hipótesis** es:
+
+$$
+MSH = \frac{SSH}{r}
+$$
+
+Y el **estadístico de prueba**:
+
+$$
+\boxed{F_0 = \frac{MSH}{MSE} = \frac{SSH / r}{MSE} \sim F_{r, \, n-p}}
+$$
+
+donde $MSE$ es **siempre** el cuadrado medio del error del modelo completo. Se rechaza $H_0$ si $F_0 > f_{1-\alpha;\, r,\, n-p}$.
+
+------------------------------------------------------------------------
+
+#### Ejemplo 1: $H_0: \beta_1 = \beta_2, \; \beta_3 = \beta_4$
+
+Suponga un modelo con $k = 4$ predictoras. Se desea probar:
+
+$$
+H_0: \beta_1 = \beta_2, \; \beta_3 = \beta_4 \qquad \text{vs.} \qquad H_a: \beta_1 \ne \beta_2 \text{ ó } \beta_3 \ne \beta_4
+$$
+
+Reescribimos $H_0$ igualando a cero: $\beta_1 - \beta_2 = 0$, $\beta_3 - \beta_4 = 0$. En forma matricial:
+
+$$
+H_0: \underbrace{\begin{pmatrix} 0 & 1 & -1 & 0 & 0 \\ 0 & 0 & 0 & 1 & -1 \end{pmatrix}}_{\mathbf{L}} \begin{pmatrix} \beta_0 \\ \beta_1 \\ \beta_2 \\ \beta_3 \\ \beta_4 \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \end{pmatrix}
+$$
+
+$\mathbf{L}$ tiene $r = 2$ filas linealmente independientes. El **modelo reducido** se obtiene sustituyendo $\beta_1 = \beta_2$ y $\beta_3 = \beta_4$:
+
+$$
+RM: Y = \beta_0 + \beta_1(X_1 + X_2) + \beta_3(X_3 + X_4) + \varepsilon = \beta_0 + \beta_1 X_{1,2} + \beta_3 X_{3,4} + \varepsilon
+$$
+
+donde $X_{1,2} = X_1 + X_2$ y $X_{3,4} = X_3 + X_4$. El $SSE(RM)$ tiene $n - 3$ g.l.
+
+$$
+F_0 = \frac{SSH / 2}{MSE} \sim F_{2, \, n-5}
+$$
+
+------------------------------------------------------------------------
+
+#### Ejemplo 2: $H_0: \beta_1 = \beta_2 = 0, \; \beta_3 = \beta_4$
+
+Con el mismo modelo de $k = 4$:
+
+$$
+H_0: \beta_1 = 0, \; \beta_2 = 0, \; \beta_3 - \beta_4 = 0
+$$
+
+$$
+H_0: \underbrace{\begin{pmatrix} 0 & 1 & 0 & 0 & 0 \\ 0 & 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 1 & -1 \end{pmatrix}}_{\mathbf{L}} \begin{pmatrix} \beta_0 \\ \beta_1 \\ \beta_2 \\ \beta_3 \\ \beta_4 \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\ 0 \end{pmatrix}
+$$
+
+$\mathbf{L}$ tiene $r = 3$ filas linealmente independientes. El modelo reducido es:
+
+$$
+RM: Y = \beta_0 + \beta_3(X_3 + X_4) + \varepsilon = \beta_0 + \beta_3 X_{3,4} + \varepsilon
+$$
+
+$$
+F_0 = \frac{SSH / 3}{MSE} \sim F_{3, \, n-5}
+$$
+
+------------------------------------------------------------------------
+
+#### Ejemplo 3: la prueba de significancia general como caso particular
+
+La prueba ANOVA $H_0: \beta_1 = \beta_2 = \beta_3 = \beta_4 = 0$ es un caso particular con:
+
+$$
+\mathbf{L} = \begin{pmatrix} 0 & 1 & 0 & 0 & 0 \\ 0 & 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 0 & 1 \end{pmatrix}, \qquad \mathbf{c} = \begin{pmatrix} 0 \\ 0 \\ 0 \\ 0 \end{pmatrix}
+$$
+
+$r = k = 4$ filas linealmente independientes. El modelo reducido es $RM: Y = \beta_0 + \varepsilon$, donde $\hat{\beta}_0 = \bar{Y}$ y por tanto $SSE(\beta_0) = SST$ y $SSR(\beta_0) = 0$. Entonces:
+
+$$
+SSH = SST - SSE(FM) = SSR(FM) = SSR
+$$
+
+y el estadístico coincide con el de la tabla ANOVA:
+
+$$
+F_0 = \frac{SSH / k}{MSE} = \frac{SSR / k}{MSE} = \frac{MSR}{MSE} \sim F_{k, \, n-p}
+$$
+
+------------------------------------------------------------------------
+
+#### Caso general: $H_0: \mathbf{L}\boldsymbol{\beta} = \mathbf{c}$ con $\mathbf{c} \ne \mathbf{0}$
+
+Hasta ahora hemos visto el caso $\mathbf{c} = \mathbf{0}$, pero es posible probar hipótesis donde los coeficientes se comparan contra valores específicos. Por ejemplo, en el modelo $Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \varepsilon$:
+
+$$
+H_0: \beta_1 = 3, \; \beta_2 = -1 \qquad \text{vs.} \qquad H_a: \beta_1 \ne 3 \text{ ó } \beta_2 \ne -1
+$$
+
+se escribe como:
+
+$$
+\underbrace{\begin{pmatrix} 0 & 1 & 0 \\ 0 & 0 & 1 \end{pmatrix}}_{\mathbf{L}} \begin{pmatrix} \beta_0 \\ \beta_1 \\ \beta_2 \end{pmatrix} = \underbrace{\begin{pmatrix} 3 \\ -1 \end{pmatrix}}_{\mathbf{c}}
+$$
+
+En este caso la $SSH$ se puede calcular con la fórmula cerrada:
+
+$$
+\boxed{SSH = (\mathbf{L}\hat{\boldsymbol{\beta}} - \mathbf{c})^\top \left[\mathbf{L}(\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{L}^\top\right]^{-1} (\mathbf{L}\hat{\boldsymbol{\beta}} - \mathbf{c})}
+$$
+
+Observe que cuando $\mathbf{c} = \mathbf{0}$ esta expresión se reduce a $SSH = (\mathbf{L}\hat{\boldsymbol{\beta}})^\top [\mathbf{L}(\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{L}^\top]^{-1} (\mathbf{L}\hat{\boldsymbol{\beta}})$.
+
+Revisar el taller 2, para ver como esta expresión es importante para demostrar varias de las igualdades que usamos en el curso.
+
+#### Ejemplo en R: hipótesis lineal general con `mtcars`
+
+Veamos un ejemplo completo. Con el modelo `mpg ~ wt + hp + qsec`, probemos la hipótesis $H_0: \beta_{wt} = \beta_{hp}, \; \beta_{qsec} = 0$ (es decir, que el efecto del peso y la potencia son iguales, y que `qsec` no aporta):
+
+```{r}
+modelo_full <- lm(mpg ~ wt + hp + qsec, data = mtcars)
+summary(modelo_full)
+```
+
+Construimos la prueba manualmente:
+
+```{r}
+# Coeficientes: (Intercept), wt, hp, qsec -> p = 4
+# H0: beta_wt - beta_hp = 0, beta_qsec = 0
+
+L <- matrix(c(0, 1, -1, 0,
+              0, 0,  0, 1), nrow = 2, byrow = TRUE)
+c_vec <- c(0, 0)
+
+beta_hat_full <- coef(modelo_full)
+X_full <- model.matrix(modelo_full)
+XtX_inv <- solve(t(X_full) %*% X_full)
+
+# SSH con fórmula cerrada
+Lb_minus_c <- L %*% beta_hat_full - c_vec
+SSH <- t(Lb_minus_c) %*% solve(L %*% XtX_inv %*% t(L)) %*% Lb_minus_c
+
+r <- qr(L)$rank  # filas linealmente independientes
+n_obs <- nrow(mtcars)
+p_full <- length(beta_hat_full)
+MSE_full <- sum(residuals(modelo_full)^2) / (n_obs - p_full)
+
+F0_test <- (SSH / r) / MSE_full
+vp <- 1 - pf(F0_test, df1 = r, df2 = n_obs - p_full)
+
+cat("Matriz L:\n")
+print(L)
+cat("\nSSH =", round(SSH, 4), "\n")
+cat("r =", r, "\n")
+cat("F0 =", round(F0_test, 4), "\n")
+cat("valor-p =", round(vp, 4), "\n")
+```
+
+Ahora probemos un caso con $\mathbf{c} \ne \mathbf{0}$. Supongamos que la teoría sugiere que $\beta_{wt} = -4$ y $\beta_{hp} = -0.03$. Queremos probar:
+
+$$
+H_0: \beta_{wt} = -4, \; \beta_{hp} = -0.03 \qquad \text{vs.} \qquad H_a: \beta_{wt} \ne -4 \text{ ó } \beta_{hp} \ne -0.03
+$$
+
+```{r}
+L2 <- matrix(c(0, 1, 0, 0,
+               0, 0, 1, 0), nrow = 2, byrow = TRUE)
+c_vec2 <- c(-4, -0.03)
+
+Lb_minus_c2 <- L2 %*% beta_hat_full - c_vec2
+SSH2 <- t(Lb_minus_c2) %*% solve(L2 %*% XtX_inv %*% t(L2)) %*% Lb_minus_c2
+
+r2 <- qr(L2)$rank
+F0_test2 <- (SSH2 / r2) / MSE_full
+vp2 <- 1 - pf(F0_test2, df1 = r2, df2 = n_obs - p_full)
+
+cat("H0: beta_wt = -4, beta_hp = -0.03\n")
+cat("SSH =", round(SSH2, 4), "\n")
+cat("F0 =", round(F0_test2, 4), "\n")
+cat("valor-p =", round(vp2, 4), "\n")
+
+if (vp2 < 0.05) {
+  cat("-> Rechazamos H0: los valores teóricos no son compatibles con los datos.\n")
+} else {
+  cat("-> No rechazamos H0: los datos son compatibles con los valores teóricos.\n")
+}
+```
+
+Finalmente, verifiquemos que la prueba ANOVA general es un caso particular. Si $\mathbf{L} = [\mathbf{0} \mid \mathbf{I}_k]$ y $\mathbf{c} = \mathbf{0}$:
+
+```{r}
+# L para prueba de significancia general: probar que todos los betas (excepto intercepto) son 0
+k_pred <- p_full - 1
+L_anova <- cbind(rep(0, k_pred), diag(k_pred))
+c_anova <- rep(0, k_pred)
+
+Lb_anova <- L_anova %*% beta_hat_full - c_anova
+SSH_anova <- t(Lb_anova) %*% solve(L_anova %*% XtX_inv %*% t(L_anova)) %*% Lb_anova
+
+F0_anova <- (SSH_anova / k_pred) / MSE_full
+
+cat("F0 (vía hipótesis lineal general) =", round(F0_anova, 4), "\n")
+cat("F0 (vía summary del modelo)       =", round(summary(modelo_full)$fstatistic[1], 4), "\n")
+```
+
+### Predicción de valores futuros
+
+Suponga ahora que después de haber ajustado el modelo de regresión lineal ingresa una nueva observación $(X_1, X_2, \ldots, X_k)$, este conjunto de valores se llamará $x_0$. Uno entonces
+puede calcular tanto la esperanza de la respuesta, es decir, el promedio de todos los individuos con esos valores, o estimar la respuesta para un solo individuo con esos valores. Para ambos casos,
+la mejor estimación es $\hat{Y}_0 = x_0 \hat{\boldsymbol{\beta}}$, sin embargo, la incertidumbre para esta no es la misma en ambos escenarios.
+
+- Para la **esperanza de la respuesta** (intervalo de confianza), la varianza de $\hat{Y}_0$ es $Var(\hat{Y}_0) = \sigma^2 x_0 (\mathbf{X}^\top \mathbf{X})^{-1} x_0^\top$.
+- Para la **predicción de un nuevo individuo** (intervalo de predicción), la varianza es $Var(Y_0 - \hat{Y}_0) = \sigma^2 (1 + x_0 (\mathbf{X}^\top \mathbf{X})^{-1} x_0^\top)$.
+
+Por lo anterior se observa que el intervalo de predicción es siempre más amplio que el intervalo de confianza para la respuesta media, ya que incorpora la variabilidad adicional de la respuesta individual ($\sigma^2$), mientras que el intervalo de confianza solo considera la variabilidad de la estimación de la media.
+
+#### Ejemplo en R: Intervalos de confianza vs. predicción
+
+Usemos el modelo de `mtcars` ajustado previamente para ilustrar ambos tipos de intervalos. Incluimos un punto dentro de la región de observación y otro que está **fuera** (extrapolación) para ver cómo se comportan los intervalos.
+
+```{r}
+# Ajustar modelo
+modelo <- lm(mpg ~ wt + hp, data = mtcars)
+
+# Puntos dentro de la región de observación
+nuevos_dentro <- data.frame(wt = c(2.5, 3.0, 3.5), hp = c(110, 150, 200))
+
+# Punto de extrapolación: un auto extremadamente liviano y con mucha potencia
+# (fuera de la región conjunta observada en los datos)
+nuevo_extra <- data.frame(wt = 1.2, hp = 350)
+
+nuevos_datos <- rbind(nuevos_dentro, nuevo_extra)
+rownames(nuevos_datos) <- c(paste0("Punto ", 1:3), "Extrapolación")
+
+# Intervalo de confianza para la respuesta media E[Y|x0]
+ic_media <- predict(modelo, newdata = nuevos_datos, interval = "confidence", level = 0.95)
+
+# Intervalo de predicción para un valor futuro Y0
+ip_futuro <- predict(modelo, newdata = nuevos_datos, interval = "prediction", level = 0.95)
+
+cat("Intervalos de confianza para la respuesta media:\n")
+print(round(ic_media, 3))
+
+cat("\nIntervalos de predicción para un valor futuro:\n")
+print(round(ip_futuro, 3))
+
+cat("\nAmplitud promedio IC (media):", round(mean(ic_media[, "upr"] - ic_media[, "lwr"]), 3), "\n")
+cat("Amplitud promedio IP (futuro):", round(mean(ip_futuro[, "upr"] - ip_futuro[, "lwr"]), 3), "\n")
+cat("\nNote cómo el punto de extrapolación tiene intervalos mucho más amplios,\n")
+cat("reflejando la mayor incertidumbre al predecir fuera de la región observada.\n")
+```
+
+#### Visualización: IC para la media vs. IP para un valor futuro
+
+Para ver gráficamente la diferencia entre ambos intervalos, graficamos las bandas de confianza y predicción variando el peso (`wt`) mientras fijamos `hp` en su mediana.
+
+```{r, fig.width=9, fig.height=6}
+# Crear secuencia de valores para wt (incluyendo zona de extrapolación)
+wt_seq <- seq(min(mtcars$wt) - 0.8, max(mtcars$wt) + 0.8, length.out = 200)
+datos_pred <- data.frame(wt = wt_seq, hp = median(mtcars$hp))
+
+# Calcular ambos intervalos
+ic <- predict(modelo, newdata = datos_pred, interval = "confidence", level = 0.95)
+ip <- predict(modelo, newdata = datos_pred, interval = "prediction", level = 0.95)
+
+# Identificar zona de interpolación vs extrapolación
+en_rango <- wt_seq >= min(mtcars$wt) & wt_seq <= max(mtcars$wt)
+
+par(mar = c(5, 4.5, 3, 1))
+plot(mtcars$wt, mtcars$mpg, pch = 19, col = "gray30", cex = 1.2,
+     xlab = "Peso (wt, miles de libras)", ylab = "Rendimiento (mpg)",
+     main = "Bandas de confianza (media) vs. predicción (individuo)",
+     xlim = range(wt_seq), ylim = range(ip[, c("lwr", "upr")]))
+
+# Zona de extrapolación (fondo sombreado)
+rect(min(wt_seq), par("usr")[3], min(mtcars$wt), par("usr")[4],
+     col = rgb(1, 0.9, 0.8, 0.4), border = NA)
+rect(max(mtcars$wt), par("usr")[3], max(wt_seq), par("usr")[4],
+     col = rgb(1, 0.9, 0.8, 0.4), border = NA)
+
+# Banda de predicción (más amplia)
+polygon(c(wt_seq, rev(wt_seq)), c(ip[, "lwr"], rev(ip[, "upr"])),
+        col = rgb(1, 0.4, 0.4, 0.15), border = NA)
+lines(wt_seq, ip[, "lwr"], col = rgb(1, 0.3, 0.3, 0.6), lty = 2, lwd = 1.5)
+lines(wt_seq, ip[, "upr"], col = rgb(1, 0.3, 0.3, 0.6), lty = 2, lwd = 1.5)
+
+# Banda de confianza (más estrecha)
+polygon(c(wt_seq, rev(wt_seq)), c(ic[, "lwr"], rev(ic[, "upr"])),
+        col = rgb(0.2, 0.4, 0.8, 0.25), border = NA)
+lines(wt_seq, ic[, "lwr"], col = rgb(0.2, 0.4, 0.8, 0.6), lty = 2, lwd = 1.5)
+lines(wt_seq, ic[, "upr"], col = rgb(0.2, 0.4, 0.8, 0.6), lty = 2, lwd = 1.5)
+
+# Línea ajustada
+lines(wt_seq, ic[, "fit"], col = "navy", lwd = 2.5)
+
+# Líneas verticales delimitando la región de observación
+abline(v = min(mtcars$wt), col = "darkorange", lty = 3, lwd = 1.5)
+abline(v = max(mtcars$wt), col = "darkorange", lty = 3, lwd = 1.5)
+
+# Re-dibujar los puntos encima
+points(mtcars$wt, mtcars$mpg, pch = 19, col = "gray30", cex = 1.2)
+
+legend("topright",
+       legend = c("Datos observados", "Línea ajustada",
+                  "IC 95% (respuesta media)", "IP 95% (valor futuro)",
+                  "Zona de extrapolación"),
+       col = c("gray30", "navy", rgb(0.2, 0.4, 0.8, 0.6),
+               rgb(1, 0.3, 0.3, 0.6), rgb(1, 0.7, 0.5, 0.6)),
+       pch = c(19, NA, NA, NA, 15),
+       lty = c(NA, 1, 2, 2, NA),
+       lwd = c(NA, 2.5, 1.5, 1.5, NA),
+       pt.cex = c(1.2, NA, NA, NA, 2),
+       bty = "n", cex = 0.9)
+```
+
+Note cómo ambas bandas se ensanchan al alejarse del centro de los datos, y especialmente al entrar en la zona de extrapolación (sombreada en naranja). Esto refleja que **la incertidumbre crece al alejarnos de la región observada**.
+
+#### Ejemplo con más de dos covariables
+
+Para reforzar la interpretación *ceteris paribus* (manteniendo todo lo demás constante), ajustemos un modelo con más predictoras. Usaremos `mpg` en función de `wt`, `hp`, `drat` (relación del eje trasero) y `qsec` (tiempo en el cuarto de milla).
+
+```{r}
+modelo_multi <- lm(mpg ~ wt + hp + drat + qsec, data = mtcars)
+summary(modelo_multi)
+```
+
+Interpretación de los coeficientes:
+
+- $\hat{\beta}_{wt}$: por cada 1000 libras adicionales de peso, el rendimiento disminuye en promedio $|\hat{\beta}_{wt}|$ mpg, **manteniendo hp, drat y qsec constantes**.
+- $\hat{\beta}_{hp}$: por cada caballo de fuerza adicional, el rendimiento cambia en promedio $\hat{\beta}_{hp}$ mpg, **manteniendo wt, drat y qsec constantes**.
+- $\hat{\beta}_{drat}$: por cada unidad adicional en la relación del eje trasero, el rendimiento cambia en $\hat{\beta}_{drat}$ mpg, **manteniendo wt, hp y qsec constantes**.
+- $\hat{\beta}_{qsec}$: por cada segundo adicional en el cuarto de milla, el rendimiento cambia en $\hat{\beta}_{qsec}$ mpg, **manteniendo wt, hp y drat constantes**.
+
+Es clave que cada coeficiente se interpreta **condicionado en que las demás predictoras permanecen fijas**. Esto no significa que en la realidad una pueda variar sin afectar las otras, sino que es la interpretación matemática del coeficiente parcial.
+
+```{r}
+# Predicción con el modelo de 4 covariables
+# Punto dentro de la región observada
+x0_dentro <- data.frame(wt = 3.2, hp = 150, drat = 3.5, qsec = 18)
+
+# Punto de extrapolación: valores individualmente razonables pero combinación atípica
+# (auto muy pesado pero con tiempo de cuarto de milla muy bajo = combinación rara)
+x0_extra <- data.frame(wt = 5.0, hp = 100, drat = 4.5, qsec = 14)
+
+nuevos_multi <- rbind(x0_dentro, x0_extra)
+rownames(nuevos_multi) <- c("Interpolación", "Extrapolación")
+
+ic_multi <- predict(modelo_multi, newdata = nuevos_multi, interval = "confidence", level = 0.95)
+ip_multi <- predict(modelo_multi, newdata = nuevos_multi, interval = "prediction", level = 0.95)
+
+cat("IC para la respuesta media:\n")
+print(round(ic_multi, 3))
+cat("\nIP para un valor futuro:\n")
+print(round(ip_multi, 3))
+
+# Verificación de extrapolación con leverage
+X_multi <- model.matrix(modelo_multi)
+x0_mat <- model.matrix(~ wt + hp + drat + qsec, data = nuevos_multi)
+h_nuevos <- diag(x0_mat %*% solve(t(X_multi) %*% X_multi) %*% t(x0_mat))
+h_max <- max(hatvalues(modelo_multi))
+
+cat("\nLeverage máximo en datos originales:", round(h_max, 4), "\n")
+for (i in 1:nrow(nuevos_multi)) {
+  estado <- ifelse(h_nuevos[i] > h_max, "EXTRAPOLACIÓN", "Interpolación")
+  cat(sprintf("%s: h00 = %.4f -> %s\n", rownames(nuevos_multi)[i], h_nuevos[i], estado))
+}
+
+cat("\nNote que el segundo punto tiene valores individuales dentro del rango de cada variable,\n")
+cat("pero su COMBINACIÓN es atípica, lo que muestra por qué se debe verificar\n")
+cat("la región conjunta y no solo los rangos marginales.\n")
+```
+
+#### Extrapolación y verificación con el leverage
+
+Al momento de hacer predicciones, es importante verificar que no estemos **extrapolando** fuera de la región de observación conjunta. Esto no se verifica revisando cada predictora por separado, sino evaluando el **leverage** del nuevo punto:
+
+$$h_{00} = x_0 (\mathbf{X}^\top \mathbf{X})^{-1} x_0^\top$$
+
+Si $h_{00} > \max_{1 \leq i \leq n} \{h_{ii}\}$, el punto $x_0$ está fuera de la región de observación y se está extrapolando.
+
+#### Visualización de la región de observación y extrapolación
+
+Para visualizar el concepto de extrapolación en el espacio de las predictoras, graficamos los datos en el plano (`wt`, `hp`) junto con la elipse que delimita aproximadamente la región de observación conjunta. Un punto puede estar dentro del rango individual de cada variable pero fuera de la región conjunta.
+
+```{r, fig.width=9, fig.height=7}
+# Región de observación conjunta en 2D (wt vs hp)
+# La elipse se basa en la distribución conjunta de las predictoras
+
+# Calcular media y covarianza de (wt, hp)
+mu <- colMeans(mtcars[, c("wt", "hp")])
+Sigma <- cov(mtcars[, c("wt", "hp")])
+
+# Generar elipse de confianza al 95%
+angulos <- seq(0, 2 * pi, length.out = 200)
+circulo <- cbind(cos(angulos), sin(angulos))
+
+# Descomposición para transformar el círculo en elipse
+eigen_S <- eigen(Sigma)
+raiz_S <- eigen_S$vectors %*% diag(sqrt(eigen_S$values)) %*% t(eigen_S$vectors)
+
+# Radio para cubrir ~95% de los datos (chi-cuadrado con 2 gl)
+radio <- sqrt(qchisq(0.95, df = 2))
+elipse <- t(mu + radio * raiz_S %*% t(circulo))
+
+# Puntos de predicción
+puntos_dentro <- data.frame(wt = c(2.5, 3.0, 3.5), hp = c(110, 150, 200))
+
+# Punto dentro de los rangos marginales pero fuera de la región conjunta
+# (bajo peso + alta potencia: combinación no observada)
+punto_extra <- data.frame(wt = 1.8, hp = 300)
+
+# Punto claramente fuera de ambos rangos
+punto_extra2 <- data.frame(wt = 1.2, hp = 350)
+
+par(mar = c(5, 4.5, 3, 1))
+plot(mtcars$wt, mtcars$hp, pch = 19, col = "gray30", cex = 1.3,
+     xlab = "Peso (wt, miles de libras)", ylab = "Potencia (hp)",
+     main = "Región de observación conjunta y detección de extrapolación",
+     xlim = c(0.8, 6), ylim = c(40, 380))
+
+# Dibujar la elipse
+polygon(elipse[, 1], elipse[, 2], border = "steelblue", lwd = 2.5,
+        col = rgb(0.27, 0.51, 0.71, 0.1))
+
+# Rangos marginales (rectángulo)
+rect(min(mtcars$wt), min(mtcars$hp), max(mtcars$wt), max(mtcars$hp),
+     border = "darkorange", lty = 2, lwd = 2)
+
+# Puntos de predicción
+points(puntos_dentro$wt, puntos_dentro$hp, pch = 17, col = "forestgreen", cex = 2)
+points(punto_extra$wt, punto_extra$hp, pch = 18, col = "red", cex = 2.5)
+points(punto_extra2$wt, punto_extra2$hp, pch = 18, col = "darkred", cex = 2.5)
+
+# Etiquetas
+text(punto_extra$wt + 0.15, punto_extra$hp + 10,
+     "Dentro de rangos\npero fuera de\nregión conjunta",
+     col = "red", cex = 0.75, adj = 0)
+text(punto_extra2$wt + 0.15, punto_extra2$hp,
+     "Fuera de ambos",
+     col = "darkred", cex = 0.75, adj = 0)
+
+# Re-dibujar datos originales encima
+points(mtcars$wt, mtcars$hp, pch = 19, col = "gray30", cex = 1.3)
+
+legend("bottomright",
+       legend = c("Datos observados",
+                  "Elipse 95% (región conjunta)",
+                  "Rangos marginales",
+                  "Interpolación",
+                  "Extrapolación"),
+       col = c("gray30", "steelblue", "darkorange", "forestgreen", "red"),
+       pch = c(19, NA, NA, 17, 18),
+       lty = c(NA, 1, 2, NA, NA),
+       lwd = c(NA, 2.5, 2, NA, NA),
+       pt.cex = c(1.3, NA, NA, 2, 2.5),
+       bty = "n", cex = 0.9)
+```
+
+El gráfico ilustra un punto clave: **el rectángulo de rangos marginales (naranja) no es equivalente a la región de observación conjunta (elipse azul)**. Un punto puede estar dentro de los rangos individuales de `wt` y `hp` pero fuera de la elipse, lo que significa que esa *combinación* de valores no fue observada en los datos. Por eso la verificación con el leverage $h_{00}$ es necesaria.
+
+```{r}
+# Verificación numérica de los puntos del gráfico
+modelo_2v <- lm(mpg ~ wt + hp, data = mtcars)
+X_2v <- model.matrix(modelo_2v)
+h_max_2v <- max(hatvalues(modelo_2v))
+
+todos_puntos <- rbind(puntos_dentro, punto_extra, punto_extra2)
+rownames(todos_puntos) <- c("P1 (2.5, 110)", "P2 (3.0, 150)", "P3 (3.5, 200)",
+                             "Extra1 (1.8, 300)", "Extra2 (1.2, 350)")
+x0_todos <- model.matrix(~ wt + hp, data = todos_puntos)
+h_todos <- diag(x0_todos %*% solve(t(X_2v) %*% X_2v) %*% t(x0_todos))
+
+cat("Leverage máximo observado:", round(h_max_2v, 4), "\n")
+cat(strrep("-", 55), "\n")
+for (i in 1:nrow(todos_puntos)) {
+  estado <- ifelse(h_todos[i] > h_max_2v, "EXTRAPOLACIÓN", "Interpolación")
+  cat(sprintf("%-20s h00 = %.4f  ->  %s\n", rownames(todos_puntos)[i], h_todos[i], estado))
+}
+```
+
+
+### Verificación de supuestos
+
+------------------------------------------------------------------------
+
+Realizar inferencia con el modelo de regresión lineal implica que se cumplan ciertos supuestos para que nuestras conclusiones sean válidas. Este es uno de los puntos que diferencia lo que se hace en el curso con la regresión lineal empleada en *Machine Learning*, donde los supuestos importan menos y el foco está en la capacidad predictiva del modelo.
+
+Recordemos que los supuestos del modelo de regresión lineal se resumen en:
+
+$$
+\varepsilon_i \overset{iid}{\sim} N(0, \sigma^2), \quad i = 1, \ldots, n
+$$
+
+Es decir, los errores deben tener **media cero**, **varianza constante**, ser **normales** e **independientes**. Como los errores $\varepsilon_i$ no son observables, usamos los **residuales** $e_i = y_i - \hat{y}_i$ como sus estimaciones para validar cada supuesto.
+
+Para los ejemplos de esta sección, trabajaremos con el modelo `mpg ~ wt + hp` del dataset `mtcars`:
+
+```{r}
+modelo <- lm(mpg ~ wt + hp, data = mtcars)
+```
+
+------------------------------------------------------------------------
+
+#### Supuesto 1: Media cero de los errores
+
+Este supuesto **siempre se cumple** cuando el modelo incluye intercepto. La razón es algebraica: al resolver las ecuaciones normales de MCO, una de las condiciones que se obtiene es precisamente que $\sum_{i=1}^n e_i = 0$, lo que implica $\bar{e} = 0$.
+
+En el caso simple, esto se puede ver fácilmente:
+
+$$
+\sum_{i=1}^{n} e_i = \sum_{i=1}^{n}(y_i - \hat{\beta}_0 - \hat{\beta}_1 x_i) = \sum_{i=1}^{n}(y_i - \bar{y}) - \hat{\beta}_1 \sum_{i=1}^{n}(x_i - \bar{x}) = 0 - 0 = 0
+$$
+
+En el caso múltiple, la demostración es análoga usando la notación matricial: las ecuaciones normales $X^\top(Y - X\hat{\beta}) = 0$ implican $X^\top e = 0$. Como la primera columna de $X$ es un vector de unos, se tiene $\mathbf{1}^\top e = \sum e_i = 0$.
+
+```{r}
+# Verificación: la suma de residuales siempre es (prácticamente) cero
+cat("Suma de residuales:", sum(residuals(modelo)), "\n")
+cat("Media de residuales:", mean(residuals(modelo)), "\n")
+```
+
+Por lo tanto, **no necesitamos validar este supuesto**: es una consecuencia directa del método de estimación.
+
+------------------------------------------------------------------------
+
+#### Supuesto 2: Varianza constante (homocedasticidad)
+
+El supuesto de varianza constante establece que $\text{Var}(\varepsilon_i) = \sigma^2$ para todo $i$. Cuando este supuesto se viola (heterocedasticidad), los estimadores MCO siguen siendo insesgados, pero **dejan de ser eficientes** y los errores estándar (y por ende las pruebas de hipótesis e intervalos de confianza) dejan de ser válidos.
+
+La herramienta principal para evaluar este supuesto es el **gráfico de residuales vs. valores ajustados**. Lo que buscamos es que la nube de puntos se distribuya de forma aleatoria alrededor de cero, sin mostrar patrones como:
+
+- Forma de embudo (varianza creciente o decreciente)
+- Forma de arco o parábola (sugiere un término cuadrático faltante)
+- Algún otro patrón sistemático
+
+```{r, fig.width=9, fig.height=5.5}
+par(mfrow = c(1, 2), mar = c(5, 4.5, 3, 1))
+
+# Gráfico de residuales vs valores ajustados
+plot(fitted(modelo), residuals(modelo),
+     pch = 19, col = "steelblue", cex = 1.2,
+     xlab = "Valores ajustados", ylab = "Residuales",
+     main = "Residuales vs Valores Ajustados",
+     las = 1, bty = "l")
+abline(h = 0, col = "tomato", lwd = 2, lty = 2)
+
+# El gráfico incorporado de R (plot 1 del modelo)
+plot(modelo, which = 1, pch = 19, col = "steelblue", cex = 1.2)
+```
+
+En este gráfico buscamos que **no haya patrón visible**. Si los puntos se distribuyen de forma aleatoria y homogénea alrededor de la línea $e = 0$, el supuesto de varianza constante se sostiene.
+
+**Ejemplo de varianza no constante:** Veamos un caso artificial donde la varianza crece con $x$:
+
+```{r, fig.width=9, fig.height=5.5}
+set.seed(42)
+n_sim <- 100
+x_sim <- seq(1, 10, length.out = n_sim)
+# La varianza del error crece con x (heterocedasticidad)
+y_sim <- 2 + 3 * x_sim + rnorm(n_sim, sd = 0.5 * x_sim)
+
+modelo_hetero <- lm(y_sim ~ x_sim)
+
+par(mfrow = c(1, 2), mar = c(5, 4.5, 3, 1))
+plot(x_sim, y_sim, pch = 19, col = "steelblue",
+     xlab = "x", ylab = "y", main = "Datos con heterocedasticidad")
+abline(modelo_hetero, col = "tomato", lwd = 2)
+
+plot(fitted(modelo_hetero), residuals(modelo_hetero),
+     pch = 19, col = "steelblue",
+     xlab = "Valores ajustados", ylab = "Residuales",
+     main = "Residuales: forma de embudo")
+abline(h = 0, col = "tomato", lwd = 2, lty = 2)
+```
+
+Note cómo los residuales forman un patrón de **embudo** (se abren hacia la derecha), indicando que la varianza del error no es constante.
+
+**Soluciones comunes al problema de heterocedasticidad:**
+
+1. **Mínimos Cuadrados Ponderados (MCP):** Se asignan pesos $\omega_i$ inversamente proporcionales a la varianza de cada observación, minimizando $\sum \omega_i (y_i - \hat{y}_i)^2$.
+
+2. **Transformaciones en $Y$:** A menudo una transformación logarítmica estabiliza la varianza. Si $\text{Var}(\varepsilon_i) \propto E[Y_i]^2$, aplicar $\ln(Y)$ puede resolver el problema.
+
+3. **Relación funcional adecuada:** A veces el patrón en los residuales indica que falta un término (por ejemplo, cuadrático) en el modelo, no que la varianza sea no constante.
+
+```{r, fig.width=9, fig.height=5.5}
+# Ejemplo de solución: transformación logarítmica
+y_log <- log(y_sim)
+modelo_log <- lm(y_log ~ x_sim)
+
+par(mfrow = c(1, 2), mar = c(5, 4.5, 3, 1))
+plot(fitted(modelo_hetero), residuals(modelo_hetero),
+     pch = 19, col = "steelblue",
+     xlab = "Valores ajustados", ylab = "Residuales",
+     main = "Sin transformación (embudo)")
+abline(h = 0, col = "tomato", lwd = 2, lty = 2)
+
+plot(fitted(modelo_log), residuals(modelo_log),
+     pch = 19, col = "forestgreen",
+     xlab = "Valores ajustados", ylab = "Residuales",
+     main = "Con log(Y) (más homogéneo)")
+abline(h = 0, col = "tomato", lwd = 2, lty = 2)
+```
+
+------------------------------------------------------------------------
+
+#### Supuesto 3: Normalidad de los errores
+
+El supuesto de normalidad es necesario para que los estadísticos $T$ y $F$ que usamos en las pruebas de hipótesis e intervalos de confianza tengan las distribuciones que les asignamos. Se evalúa mediante:
+
+1. **Prueba de Shapiro-Wilk:** Contrasta $H_0: \varepsilon_i \sim \text{Normal}$ vs. $H_1: \varepsilon_i \not\sim \text{Normal}$. Si el valor-$p$ es mayor que $\alpha$, no rechazamos $H_0$ y consideramos que el supuesto es razonable.
+
+2. **Gráfico QQ (cuantil-cuantil):** Compara los cuantiles de los residuales con los cuantiles teóricos de una distribución normal. Si los puntos se alinean sobre la diagonal, el supuesto se sostiene.
+
+```{r, fig.width=7, fig.height=5.5}
+par(mar = c(5, 4.5, 3, 1))
+
+# Gráfico QQ de los residuales
+plot(modelo, which = 2, pch = 19, col = "steelblue", cex = 1.2)
+```
+
+```{r}
+# Prueba de Shapiro-Wilk
+shapiro.test(residuals(modelo))
+```
+
+Si el valor-$p$ de la prueba es mayor que el nivel de significancia (por ejemplo, 0.05), no rechazamos $H_0$ y concluimos que **no hay evidencia suficiente para afirmar que los errores no son normales**.
+
+**Ejemplo de no normalidad:** Veamos un caso donde los errores provienen de una distribución con colas pesadas:
+
+```{r, fig.width=7, fig.height=5.5}
+set.seed(123)
+n_sim2 <- 80
+x_nn <- runif(n_sim2, 0, 10)
+# Errores con distribución t (colas pesadas)
+y_nn <- 5 + 2 * x_nn + rt(n_sim2, df = 2)
+
+modelo_nn <- lm(y_nn ~ x_nn)
+
+par(mar = c(5, 4.5, 3, 1))
+qqnorm(residuals(modelo_nn), pch = 19, col = "tomato",
+       main = "QQ-plot: desviación en las colas")
+qqline(residuals(modelo_nn), col = "navy", lwd = 2)
+```
+
+```{r}
+shapiro.test(residuals(modelo_nn))
+```
+
+Note cómo en el gráfico QQ los puntos se desvían de la recta en los extremos, y la prueba de Shapiro-Wilk rechaza $H_0$: hay evidencia de que los errores **no son normales**.
+
+**Soluciones al problema de no normalidad:**
+
+- Frecuentemente la no normalidad viene acompañada de varianza no constante. Una transformación que estabilice la varianza puede también mejorar la normalidad.
+- Si la no normalidad persiste, se pueden emplear **métodos no paramétricos** de regresión que no asumen un modelo probabilístico particular sobre los errores.
+
+------------------------------------------------------------------------
+
+#### Supuesto 4: Independencia de los errores
+
+Este supuesto establece que los errores no están correlacionados entre sí: $\text{Cov}(\varepsilon_i, \varepsilon_j) = 0$ para $i \neq j$. Su evaluación requiere conocer el **orden temporal** en que se recolectaron las observaciones. Si se tiene esa información, se puede examinar un gráfico de residuales vs. el tiempo buscando patrones como ciclos, rachas o tendencias.
+
+En muchas situaciones prácticas (y en este curso) **no se cuenta con el orden de las observaciones**, por lo que el supuesto se asume como válido. En el curso de **Estadística III** se estudian modelos que relajan este supuesto, donde se trabaja con errores correlacionados, variables de tendencia, estacionalidad y primeras diferencias.
+
+------------------------------------------------------------------------
+
+### Residuales escalados
+
+Los residuales ordinarios $e_i = y_i - \hat{y}_i$ tienen un problema: **no todos tienen la misma varianza** ni son independientes entre sí, a pesar de que los errores $\varepsilon_i$ sí cumplen esas propiedades. Esto se debe a que:
+
+$$
+\mathbf{e} = (\mathbf{I} - \mathbf{H})\mathbf{Y}
+$$
+
+de donde se puede mostrar que:
+
+$$
+\text{Var}(e_i) = \sigma^2(1 - h_{ii}), \qquad \text{Cov}(e_i, e_j) = -\sigma^2 h_{ij} \quad (i \neq j)
+$$
+
+donde $h_{ii}$ es el $i$-ésimo elemento de la diagonal de la matriz $\mathbf{H} = \mathbf{X}(\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top$. Es decir, los residuales en puntos con mayor *leverage* ($h_{ii}$ alto) tienen menor varianza. Para corregir esto, se definen versiones escaladas de los residuales.
+
+------------------------------------------------------------------------
+
+#### Residuales estandarizados
+
+Se obtienen dividiendo cada residual por $\sqrt{MSE}$, como si todos tuvieran la misma varianza:
+
+$$
+d_i = \frac{e_i}{\sqrt{MSE}}, \quad i = 1, \ldots, n
+$$
+
+Si el modelo es adecuado, los $d_i$ deberían oscilar entre $-3$ y $3$. Una observación con $|d_i| > 3$ es **potencialmente atípica**.
+
+------------------------------------------------------------------------
+
+#### Residuales estudentizados (internamente)
+
+Estos residuales corrigen el hecho de que $\text{Var}(e_i) = \sigma^2(1 - h_{ii})$, dividiendo por la desviación estándar real de cada residual:
+
+$$
+r_i = \frac{e_i}{\sqrt{MSE(1 - h_{ii})}}, \quad i = 1, \ldots, n
+$$
+
+A diferencia de los estandarizados, los estudentizados tienen en cuenta que los residuales en puntos con alto *leverage* son naturalmente más pequeños. Este residual también debe ubicarse entre $-3$ y $3$. Se considera que una observación es **atípica** si $|r_i| > 3$.
+
+------------------------------------------------------------------------
+
+#### Ejemplo en R: comparación de residuales escalados
+
+```{r, fig.width=9, fig.height=5.5}
+# Residuales estandarizados y estudentizados
+d_i <- residuals(modelo) / sqrt(sum(residuals(modelo)^2) / modelo$df.residual)
+r_i <- rstandard(modelo)   # residuales estudentizados internamente
+r_ext <- rstudent(modelo)  # residuales estudentizados externamente
+
+par(mfrow = c(1, 2), mar = c(5, 4.5, 3, 1))
+
+# Residuales estandarizados
+plot(fitted(modelo), d_i, pch = 19, col = "steelblue", cex = 1.2,
+     xlab = "Valores ajustados", ylab = expression(d[i]),
+     main = "Residuales estandarizados", las = 1, bty = "l")
+abline(h = c(-3, 0, 3), col = c("tomato", "gray50", "tomato"),
+       lty = c(2, 1, 2), lwd = c(1.5, 1, 1.5))
+
+# Residuales estudentizados
+plot(fitted(modelo), r_i, pch = 19, col = "forestgreen", cex = 1.2,
+     xlab = "Valores ajustados", ylab = expression(r[i]),
+     main = "Residuales estudentizados", las = 1, bty = "l")
+abline(h = c(-3, 0, 3), col = c("tomato", "gray50", "tomato"),
+       lty = c(2, 1, 2), lwd = c(1.5, 1, 1.5))
+```
+
+```{r}
+# Identificación de observaciones atípicas
+cat("Observaciones atípicas (|r_i| > 3) usando residuales estudentizados:\n")
+atipicas_r <- which(abs(rstandard(modelo)) > 3)
+if (length(atipicas_r) == 0) {
+  cat("  Ninguna observación supera el umbral de 3.\n")
+} else {
+  print(atipicas_r)
+}
+
+cat("\nObservaciones atípicas (|r*_i| > 3) usando residuales estudentizados externos:\n")
+atipicas_ext <- which(abs(rstudent(modelo)) > 3)
+if (length(atipicas_ext) == 0) {
+  cat("  Ninguna observación supera el umbral de 3.\n")
+} else {
+  print(atipicas_ext)
+}
+```
+
+------------------------------------------------------------------------
+
+### Observaciones atípicas (*outliers*)
+
+Una **observación atípica** es aquella que está separada del resto en su valor de la respuesta $Y$ y que puede afectar los resultados del ajuste. Interesa identificarlas para determinar si se tratan de:
+
+- **Errores de registro o medición:** pueden ser descartadas del análisis.
+- **Datos correctos pero inusuales:** no deben eliminarse, pero se debe investigar su impacto.
+
+La detección se realiza con los **residuales estudentizados**: una observación es atípica si $|r_i| > 3$. Muchos *outliers* pueden provocar que los niveles de confianza reales sean menores de lo esperado.
+
+------------------------------------------------------------------------
+
+### Puntos de balanceo (*leverage points*)
+
+Un **punto de balanceo** es una observación que está alejada del resto en el **espacio de las predictoras** (no necesariamente en $Y$). Estos puntos pueden no afectar los coeficientes estimados, pero sí pueden distorsionar estadísticas como el $R^2$ y los errores estándar.
+
+Los puntos de balanceo se detectan mediante los elementos de la diagonal principal de la matriz $\mathbf{H}$, los $h_{ii}$, que miden la distancia estandarizada de la $i$-ésima observación al centro del espacio de las predictoras.
+
+La media de los $h_{ii}$ es:
+
+$$
+\bar{h} = \frac{\sum_{i=1}^n h_{ii}}{n} = \frac{\text{traza}(\mathbf{H})}{n} = \frac{p}{n}
+$$
+
+Se considera que la observación $i$ es un **punto de balanceo** si:
+
+$$
+h_{ii} > \frac{2p}{n}
+$$
+
+(siempre que $2p/n < 1$, pues los $h_{ii}$ siempre son menores que 1).
+
+```{r, fig.width=9, fig.height=5.5}
+n <- nrow(mtcars)
+p <- length(coef(modelo))
+h_ii <- hatvalues(modelo)
+umbral_leverage <- 2 * p / n
+
+par(mar = c(5, 4.5, 3, 1))
+plot(1:n, h_ii, pch = 19, col = "steelblue", cex = 1.2,
+     xlab = "Observación", ylab = expression(h[ii]),
+     main = "Leverage de cada observación",
+     las = 1, bty = "l")
+abline(h = umbral_leverage, col = "tomato", lwd = 2, lty = 2)
+text(which(h_ii > umbral_leverage) + 1, h_ii[h_ii > umbral_leverage],
+     labels = names(h_ii)[h_ii > umbral_leverage], cex = 0.7, col = "tomato")
+
+legend("topright", legend = paste0("Umbral: 2p/n = ", round(umbral_leverage, 3)),
+       col = "tomato", lty = 2, lwd = 2, bty = "n")
+```
+
+```{r}
+# Puntos de balanceo identificados
+balanceo <- which(h_ii > umbral_leverage)
+cat("Puntos de balanceo (h_ii >", round(umbral_leverage, 3), "):\n")
+print(data.frame(
+  Observacion = names(balanceo),
+  h_ii = round(h_ii[balanceo], 4)
+))
+```
+
+------------------------------------------------------------------------
+
+### Observaciones influenciales
+
+Una observación es **influencial** si su exclusión del modelo causa cambios importantes en la ecuación de regresión ajustada. Estas observaciones suelen tener un valor moderadamente inusual tanto en el espacio de las predictoras como en la respuesta (es decir, combinan características de ser atípicas y de balanceo).
+
+Para detectarlas, se cuenta con tres criterios principales:
+
+------------------------------------------------------------------------
+
+#### 1. Distancia de Cook
+
+Mide la distancia cuadrática entre el vector de parámetros estimados con todas las observaciones ($\hat{\beta}$) y el estimado sin la observación $i$ ($\hat{\beta}_{(i)}$):
+
+$$
+D_i = \frac{(\hat{\beta}_{(i)} - \hat{\beta})^\top (\mathbf{X}^\top\mathbf{X})(\hat{\beta}_{(i)} - \hat{\beta})}{p \cdot MSE} = \frac{r_i^2}{p} \cdot \frac{h_{ii}}{1 - h_{ii}}, \quad i = 1, \ldots, n
+$$
+
+Note que $D_i$ combina información del residual estudentizado ($r_i$) y del leverage ($h_{ii}$): una observación puede ser influencial por ser atípica, por tener alto leverage, o por ambas razones.
+
+**Criterio:** Una observación es influencial si $D_i > 1$ (dado que $F_{0.5,\, p,\, n-p} \approx 1$).
+
+------------------------------------------------------------------------
+
+#### 2. Diagnóstico DFFITS
+
+Mide cuántas desviaciones estándar se mueve el valor ajustado $\hat{y}_i$ cuando se omite la observación $i$:
+
+$$
+\text{DFFITS}_i = \frac{\hat{y}_i - \hat{y}_{(i)}}{\sqrt{MSE_{(i)} \cdot h_{ii}}}
+$$
+
+donde $\hat{y}_{(i)}$ es el valor ajustado sin la observación $i$ y $MSE_{(i)}$ es el cuadrado medio del error sin dicha observación.
+
+**Criterio:** Una observación es influencial si $|\text{DFFITS}_i| > 2\sqrt{p/n}$.
+
+------------------------------------------------------------------------
+
+#### 3. Diagnóstico DFBETAS
+
+Mide cuánto cambia cada coeficiente individual $\hat{\beta}_j$ (en unidades de su error estándar) cuando se omite la observación $i$:
+
+$$
+\text{DFBETAS}_{j(i)} = \frac{\hat{\beta}_j - \hat{\beta}_{j(i)}}{\sqrt{MSE_{(i)} \cdot c_{jj}}}
+$$
+
+donde $c_{jj}$ es el $j$-ésimo elemento de la diagonal de $(\mathbf{X}^\top\mathbf{X})^{-1}$.
+
+**Criterio:** Una observación es influencial sobre $\hat{\beta}_j$ si $|\text{DFBETAS}_{j(i)}| > 2/\sqrt{n}$.
+
+DFBETAS es más informativo que Cook o DFFITS porque indica **cuál coeficiente** es el más afectado por cada observación.
+
+------------------------------------------------------------------------
+
+#### Ejemplo en R: diagnósticos de influencia completos
+
+```{r, fig.width=10, fig.height=9}
+n <- nrow(mtcars)
+p <- length(coef(modelo))
+
+# Calcular todos los diagnósticos
+cook_d <- cooks.distance(modelo)
+dffits_val <- dffits(modelo)
+dfbetas_val <- dfbetas(modelo)
+
+# Umbrales
+umbral_cook <- 1
+umbral_dffits <- 2 * sqrt(p / n)
+umbral_dfbetas <- 2 / sqrt(n)
+
+# Función auxiliar para etiquetar sin solapamiento
+etiquetar <- function(x, y, idx, labels) {
+  if (length(idx) == 0) return(invisible(NULL))
+  # Alternar posición (arriba/abajo) para evitar solapamiento
+  posiciones <- ifelse(seq_along(idx) %% 2 == 1, 3, 1)
+  text(x[idx], y[idx], labels = labels[idx], cex = 0.6, pos = posiciones, col = "tomato")
+}
+
+par(mfrow = c(2, 2), mar = c(5, 4.5, 3, 2))
+
+# 1. Distancia de Cook
+plot(1:n, cook_d, type = "h", lwd = 2, col = "steelblue",
+     xlab = "Observación", ylab = expression(D[i]),
+     main = "Distancia de Cook", las = 1, bty = "l")
+abline(h = umbral_cook, col = "tomato", lty = 2, lwd = 1.5)
+top_cook <- order(cook_d, decreasing = TRUE)[1:3]
+etiquetar(1:n, cook_d, top_cook, rownames(mtcars))
+
+# 2. DFFITS
+plot(1:n, dffits_val, pch = 19, col = "steelblue", cex = 1.1,
+     xlab = "Observación", ylab = "DFFITS",
+     main = paste0("DFFITS (umbral = ", round(umbral_dffits, 3), ")"),
+     las = 1, bty = "l")
+abline(h = c(-umbral_dffits, umbral_dffits), col = "tomato", lty = 2, lwd = 1.5)
+idx_dffits <- which(abs(dffits_val) > umbral_dffits)
+etiquetar(1:n, dffits_val, idx_dffits, rownames(mtcars))
+
+# 3. DFBETAS para wt
+dfb_wt <- dfbetas_val[, "wt"]
+plot(1:n, dfb_wt, pch = 19, col = "forestgreen", cex = 1.1,
+     xlab = "Observación", ylab = expression(DFBETAS[wt]),
+     main = paste0("DFBETAS para wt (umbral = ", round(umbral_dfbetas, 3), ")"),
+     las = 1, bty = "l")
+abline(h = c(-umbral_dfbetas, umbral_dfbetas), col = "tomato", lty = 2, lwd = 1.5)
+idx_dfb_wt <- which(abs(dfb_wt) > umbral_dfbetas)
+etiquetar(1:n, dfb_wt, idx_dfb_wt, rownames(mtcars))
+
+# 4. DFBETAS para hp
+dfb_hp <- dfbetas_val[, "hp"]
+plot(1:n, dfb_hp, pch = 19, col = "darkorange", cex = 1.1,
+     xlab = "Observación", ylab = expression(DFBETAS[hp]),
+     main = paste0("DFBETAS para hp (umbral = ", round(umbral_dfbetas, 3), ")"),
+     las = 1, bty = "l")
+abline(h = c(-umbral_dfbetas, umbral_dfbetas), col = "tomato", lty = 2, lwd = 1.5)
+idx_dfb_hp <- which(abs(dfb_hp) > umbral_dfbetas)
+etiquetar(1:n, dfb_hp, idx_dfb_hp, rownames(mtcars))
+```
+
+```{r}
+cat("=== Resumen de diagnósticos de influencia ===\n\n")
+
+cat("Distancia de Cook (D_i > 1):\n")
+inf_cook <- which(cook_d > umbral_cook)
+if (length(inf_cook) == 0) {
+  cat("  Ninguna observación supera el umbral.\n")
+  cat("  Las 3 más altas:", paste(names(sort(cook_d, decreasing = TRUE)[1:3]),
+      collapse = ", "), "\n")
+} else {
+  print(round(cook_d[inf_cook], 4))
+}
+
+cat("\nDFFITS (|DFFITS_i| >", round(umbral_dffits, 3), "):\n")
+inf_dffits <- which(abs(dffits_val) > umbral_dffits)
+if (length(inf_dffits) == 0) {
+  cat("  Ninguna observación supera el umbral.\n")
+} else {
+  print(data.frame(
+    Observacion = names(inf_dffits),
+    DFFITS = round(dffits_val[inf_dffits], 4)
+  ))
+}
+
+cat("\nDFBETAS (|DFBETAS_j(i)| >", round(umbral_dfbetas, 3), "):\n")
+inf_dfbetas <- which(abs(dfbetas_val) > umbral_dfbetas, arr.ind = TRUE)
+if (nrow(inf_dfbetas) == 0) {
+  cat("  Ninguna observación supera el umbral.\n")
+} else {
+  for (idx in 1:nrow(inf_dfbetas)) {
+    obs <- rownames(dfbetas_val)[inf_dfbetas[idx, 1]]
+    var_name <- colnames(dfbetas_val)[inf_dfbetas[idx, 2]]
+    valor <- round(dfbetas_val[inf_dfbetas[idx, 1], inf_dfbetas[idx, 2]], 4)
+    cat(sprintf("  %s influye sobre %s: DFBETAS = %.4f\n", obs, var_name, valor))
+  }
+}
+```
+
+------------------------------------------------------------------------
+
+#### Visualización integrada: atípicas, balanceo e influencia
+
+El siguiente gráfico resume los tres conceptos en una sola visualización. Cada punto se ubica según su leverage ($h_{ii}$) y su residual estudentizado ($r_i$), y su tamaño es proporcional a la distancia de Cook:
+
+```{r, fig.width=9, fig.height=6.5}
+par(mar = c(5, 4.5, 3, 1))
+
+# Datos
+h_vals <- hatvalues(modelo)
+r_vals <- rstandard(modelo)
+cook_vals <- cooks.distance(modelo)
+
+# Escalar el tamaño de los puntos por Cook's distance
+tam <- sqrt(cook_vals / max(cook_vals)) * 5 + 0.5
+
+plot(h_vals, r_vals, pch = 19,
+     col = ifelse(abs(r_vals) > 3, "red",
+           ifelse(h_vals > umbral_leverage, "darkorange", "steelblue")),
+     cex = tam,
+     xlab = expression(h[ii] ~ "(Leverage)"),
+     ylab = expression(r[i] ~ "(Residual estudentizado)"),
+     main = "Diagnóstico integrado: Atípicas, Balanceo e Influencia",
+     las = 1, bty = "l",
+     xlim = c(0, max(h_vals) * 1.15))
+
+# Líneas de referencia
+abline(h = c(-3, 3), col = "red", lty = 2, lwd = 1.5)
+abline(v = umbral_leverage, col = "darkorange", lty = 2, lwd = 1.5)
+
+# Etiquetar puntos notables
+notables <- which(h_vals > umbral_leverage | abs(r_vals) > 2 |
+                  cook_vals > quantile(cook_vals, 0.9))
+if (length(notables) > 0) {
+  text(h_vals[notables], r_vals[notables],
+       labels = names(h_vals)[notables],
+       cex = 0.65, pos = 4, col = "gray30")
+}
+
+legend("topright",
+       legend = c("Normal", "Alto leverage", "Atípica (|r| > 3)",
+                  "Tamaño ~ Dist. Cook"),
+       col = c("steelblue", "darkorange", "red", "gray50"),
+       pch = c(19, 19, 19, 1),
+       pt.cex = c(1.2, 1.2, 1.2, 2.5),
+       bty = "n", cex = 0.85)
+```
+
+------------------------------------------------------------------------
+
+#### Nota importante sobre observaciones identificadas
+
+Las observaciones identificadas como atípicas, de balanceo o influenciales **deben ser investigadas**, no eliminadas automáticamente:
+
+- Si se determina que son **errores de registro** o medición, pueden removerse del análisis.
+- Si son **datos correctos** pero inusuales, se deben mantener. En este caso, se puede recurrir a **métodos estadísticos robustos** que no se vean afectados por estas observaciones (como regresión robusta con estimadores M o MM).
+
+La eliminación de datos sin justificación es una mala práctica que puede sesgar los resultados.
