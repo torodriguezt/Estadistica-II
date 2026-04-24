@@ -1,0 +1,196 @@
+---
+output: 
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico: Regresión Lineal Múltiple (Repaso)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, \\textbf{(https://github.com/torodriguezt/Estadistica-II)}"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al taller de repaso del curso de \\textbf{Estadística II} de la \\textit{Universidad Nacional de Colombia}, Sede Medellín, en el período 2026-01. Se brinda un repaso al análisis de regresión lineal múltiple. El enfoque de este taller se centra en la comprensión del modelo de regresión lineal múltiple a nivel matricial, la comprensión del análisis de varianza y la ejecución de pruebas de hipótesis a través de la suma extra de cuadrados y el método lineal general. \\textbf{Monitor:} \\textit{Tomás Rodríguez Taborda.}"
+keywords: "regresión múltiple, sumas de cuadrados extra, hipótesis lineal general"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{float}
+  - \usepackage{threeparttable}
+  - \usepackage{threeparttablex}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "leaps", "tidyr",
+               "exams", "leaps", "MASS", "rsm", "car", "magrittr",
+               "readxl", "kableExtra")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+data <- read.csv("data/imcv_modelo_limpio.csv") |>
+  dplyr::select(IMCV, Ingresos, Salud, Trabajo, Capital)
+colnames(data) <- c("IMCV", "Ingresos", "Salud", "Trabajo", "Capital")
+```
+
+# Información general
+
+Con el propósito de repasar los conceptos del modelo de regresión lineal múltiple vistos en clase, se propone desarrollar este taller en dos partes: una de teoría básica y otra práctica.
+
+**La solución para cada uno de los problemas se efectúa a partir del software estadístico R.**
+
+## Parte teórica
+
+Dé respuesta a las preguntas formuladas a continuación con base en la teoría tratada en clase. **Provea una interpretación o justificación si lo considera necesario**.
+
+\begin{enumerate}
+
+  \item Determine el valor de verdad de las siguientes afirmaciones.
+
+  \begin{itemize}
+
+    \item[(a)] La matriz $\mathbf{H} = \mathbf{X(X^{t}X)^{-1}X^{t}}$ es una matriz de proyección ortogonal, por lo cual satisface $\mathbf{HX} = \mathbf{X}$ y $\text{tr}(\mathbf{H}) = p$, donde $p = k + 1$. En consecuencia, el vector de residuales $\mathbf{e} = (\mathbf{I}_n - \mathbf{H})\mathbf{Y}$ es ortogonal a las columnas de $\mathbf{X}$, es decir, $\mathbf{X}^{t}\mathbf{e} = \mathbf{0}$.
+
+    \item[(b)] Demuestre que para probar la significancia marginal del
+    $j$-ésimo parámetro en un modelo de RLM, los estadísticos $F_{j,0}$
+    y $T_{j,0}$ satisfacen $F_{j,0} = T_{j,0}^{2}$.
+
+    \item[(c)] El coeficiente de determinación múltiple $R^{2}$ nunca decrece al agregar variables predictoras al modelo, mientras que el $R^{2}_{adj}$ puede disminuir si la variable agregada no reduce suficientemente la $\text{SSE}$ como para compensar la pérdida de un grado de libertad. Por tanto, entre dos modelos ajustados se prefiere el de menor $\text{MSE}$, o equivalentemente, el de mayor $R^{2}_{adj}$.
+
+    \item[(d)] Considere el contraste lineal general $H_{0}: \mathbf{L}\boldsymbol{\beta} = \mathbf{c}$ vs.\ $H_{1}: \mathbf{L}\boldsymbol{\beta} \neq \mathbf{c}$, donde $\mathbf{L}$ es una matriz $m \times p$ con $r \leq m$ filas linealmente independientes y $\mathbf{c}$ es un vector de constantes arbitrario de dimensión $m \times 1$. Los grados de libertad asociados a la suma de cuadrados debida a la hipótesis son iguales a $r$, y pueden calcularse como la diferencia entre los grados de libertad de la $\text{SSE}$ del modelo reducido y la del modelo completo.
+
+    \item[(e)] Bajo los supuestos del modelo de RLM, el intervalo de confianza del $(1-\alpha)\%$ para el parámetro $\beta_j$ ($j = 0, 1, \ldots, k$) está dado por
+    \begin{center}
+    $\hat{\beta}_j \;\pm\; t_{1-\alpha/2,\; n-p}\; ee\!\left(\hat{\beta}_j\right),$
+    \end{center}
+    donde $ee\!\left(\hat{\beta}_j\right) = \sqrt{\hat{\sigma}^{2}\, c_{jj}}$, siendo $c_{jj}$ el $j$-ésimo elemento de la diagonal principal de $\mathbf{(X^{t}X)^{-1}}$.
+
+  \end{itemize}
+
+  \item Considere el modelo de regresión lineal múltiple con $k = 4$ variables predictoras:
+  \[
+    Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 X_3 + \beta_4 X_4 + \varepsilon,
+    \quad \varepsilon_i \overset{iid}{\sim} N(0,\sigma^2).
+  \]
+  Se desea probar la siguiente hipótesis:
+  \[
+    H_0:\; \beta_1 = \beta_2 \;\text{ y }\; \beta_3 + \beta_4 = 1
+    \qquad \text{vs.} \qquad
+    H_1:\; \text{alguna igualdad no se cumple.}
+  \]
+
+  \begin{itemize}
+    \item[(a)] Reescriba $H_0$ en la forma $\mathbf{L}\boldsymbol{\beta} = \mathbf{c}$, especificando explícitamente las matrices $\mathbf{L}$ y $\mathbf{c}$ junto con sus dimensiones.
+    \item[(b)] Determine el número $r$ de filas linealmente independientes de $\mathbf{L}$ y justifique su respuesta.
+    \item[(c)] Escriba el modelo reducido que se obtiene al aplicar $H_0$ al modelo completo.
+    \item[(d)] Escriba el estadístico de prueba $F_0$ y su distribución bajo $H_0$, especificando los grados de libertad en el numerador y en el denominador.
+  \end{itemize}
+
+  \item En un modelo de RLM con $k$ predictoras, demuestre que la prueba de significancia global de la regresión
+  \[
+    H_0:\; \beta_1 = \beta_2 = \cdots = \beta_k = 0
+  \]
+  puede formularse como un caso particular del procedimiento de sumas de cuadrados extra, con $A = \{\beta_1, \ldots, \beta_k\}$ y $B = \{\beta_0\}$. Muestre que el estadístico resultante coincide con $F_0 = \text{MSR}/\text{MSE}$.
+
+\end{enumerate}
+
+## Ejercicio con datos reales
+
+Considere el siguiente conjunto de datos que agrupa información sobre el índice multidimensional de calidad de vida de la ciudad de Medellín. **Se incluyen únicamente algunas variables** cuya descripción puede encontrarse **en el siguiente enlace:** \url{https://medata.gov.co/dataset/1-002-09-000041}
+
+```{r, echo=FALSE}
+table <- head(data, 5)
+
+table |>
+  knitr::kable(
+    booktabs = TRUE,
+    caption = "Información en análisis",
+    align = "c",
+    col.names = c("IMCV", "Ingresos", "Salud", "Trabajo", "Capital")
+  ) |>
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    latex_options = "HOLD_position",
+    font_size = 10
+  ) |>
+  kableExtra::column_spec(1, bold = TRUE)
+```
+
+Considere a *IMCV* como la variable respuesta. Las covariables consideradas en el análisis se especifican en la tabla anterior. **Dé respuesta a los siguientes planteamientos:**
+
+\begin{enumerate}
+
+  \item Ajuste el modelo completo y construya intervalos de confianza del $95\%$ para cada parámetro $\beta_j$, $j = 1, 2, 3, 4$. Brinde una interpretación del intervalo asociado a la covariable \textit{Ingresos} en el contexto del problema. Justifique porque no se calculo el intervalo para $\beta_0$
+
+  \item Para la covariable \textit{Salud}, verifique numéricamente la identidad $F_{j,0} = T_{j,0}^{2}$ calculando ambos estadísticos:
+  \begin{itemize}
+    \item[(a)] $T_{j,0}$ a partir de $\hat{\beta}_{\text{Salud}}$ y $ee\!\left(\hat{\beta}_{\text{Salud}}\right)$.
+    \item[(b)] $F_{j,0}$ usando sumas de cuadrados extra:
+    \[
+      F_{j,0} \;=\; \frac{\text{SSR}\!\left(\beta_{\text{Salud}} \mid \beta_0, \beta_{\text{Ingresos}}, \beta_{\text{Trabajo}}, \beta_{\text{Capital}}\right)}{\text{MSE}}.
+    \]
+  \end{itemize}
+  Compare los $p$-valores de ambos procedimientos y concluya.
+
+  \item Usando el método de sumas de cuadrados extra, pruebe si el subconjunto $\{\beta_{\text{Trabajo}},\, \beta_{\text{Capital}}\}$ aporta información significativa al modelo, dado que $\{\beta_0, \beta_{\text{Ingresos}}, \beta_{\text{Salud}}\}$ ya están presentes. Plantee las hipótesis, calcule $F_0$ y concluya con nivel de significancia $\alpha = 0.05$.
+
+  \item Usando el método lineal general, pruebe la hipótesis
+  \[
+    H_0:\; \beta_{\text{Ingresos}} = \beta_{\text{Salud}}
+    \;\;\text{y}\;\;
+    \beta_{\text{Trabajo}} + \beta_{\text{Capital}} = 1,
+  \]
+  contra la alternativa de que al menos una igualdad no se cumple. Siga los pasos:
+  \begin{itemize}
+    \item[(a)] Especifique explícitamente $\mathbf{L}$ y $\mathbf{c}$.
+    \item[(b)] Plantee el modelo reducido correspondiente.
+    \item[(c)] Calcule la reducción en la suma de cuadrados del error al pasar 
+    del modelo reducido al modelo completo, es decir, 
+$\text{SSE}(\text{RM}) - \text{SSE}(\text{FM})$.
+    \item[(d)] Reporte $F_0$, su $p$-valor y concluya con $\alpha = 0.05$.
+  \end{itemize}
+
+  \item Ajuste un modelo reducido excluyendo la covariable con mayor $p$-valor marginal en el modelo completo. Compare $R^{2}$ y $R^{2}_{adj}$ de ambos modelos.
+
+\end{enumerate}
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
