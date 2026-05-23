@@ -1,0 +1,135 @@
+---
+output:
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico Regresión Lineal Múltiple (5)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al quinto taller práctico del curso de **Estadística II** para la *Universidad Nacional de Colombia*, Sede Medellín, en el periodo 2025 - 1. Se brinda una introducción al análisis de regresión. El enfoque de este taller está en la comprensión de los métodos de regresión secuenciales y modelos de regresión con interacciones. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "regresión múltiple, secuencialidad, interacción"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{float}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, include=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "leaps","tidyr",
+               "exams","leaps","MASS","rsm","car","magrittr",
+               "readxl", "kableExtra")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+data <- read.csv("data/imcv_modelo_limpio.csv")|>
+  dplyr::select(IMCV, Ingresos,
+                Salud, Trabajo, Capital)
+colnames(data) <- c("IMCV", "Ingresos", "Salud", "Trabajo", "Capital")
+
+# -----------------------------
+# Discretización de 'Ingresos' en
+# tres niveles según sus terciles
+# -----------------------------
+data <- data |>
+  dplyr::mutate(
+    NivelIngresos = cut(Ingresos,
+                        breaks = quantile(Ingresos,
+                                          probs = c(0, 1/3, 2/3, 1)),
+                        labels = c("Bajo", "Medio", "Alto"),
+                        include.lowest = TRUE))
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos del modelo de regresión lineal múltiple vistos en clase, se propone afrontar este taller en dos partes, una de teoría básica y otra práctica.
+
+**La solución para cada uno de los problemas se efectúa a partir del software estadístico R.**
+
+## Parte teórica
+
+Dé respuesta a las preguntas formuladas a continuación con base en la teoría tratada en clase. **Provea una interpretación de ser necesario**.
+
+\begin{enumerate}
+  \item Determine el valor de verdad de las siguientes afirmaciones.
+  \begin{itemize}
+    \item (a) El método \textit{'Forward'} parte del modelo con todas las variables, eliminando secuencialmente una variable con el propósito de reducir la suma de cuadrados del error asociado. El método \textit{'Backward'} sigue la lógica contraria.
+    \item (b) En el modelo de regresión lineal simple de la clase $Y_{i} = \beta_{0}+ \beta_{1}I_{i1}+ \beta_{2}I_{i2}+ ...+ \beta_{i, c-1}I_{i,c-1}+ \varepsilon_{i}; \varepsilon_{i} \overset{iid}{\sim} N(0, \sigma^{2})$ las rectas generadas son horizontales.
+    \item (c) En el modelo de regresión lineal simple de la clase $Y_{i} = \beta_{0}+ \beta_{1}X_{i1}+ \beta_{2}I_{i2}+ ...+ \beta_{ic}I_{i,c}+ \varepsilon_{i}; \varepsilon_{i} \overset{iid}{\sim} N(0, \sigma^{2})$ las rectas generadas cambian su pendiente.
+    \item (d) En el modelo de regresión lineal con interacción $Y_{i} = \beta_{0}+ \beta_{1}X_{i1}+ \beta_{2}I_{i2}+ ...+ \beta_{ic}I_{i,c}+ \beta_{c+1}X_{i1}I_{i2}+ \beta_{c+2}X_{i1}I_{i3}+ ...+ \beta_{2c}X_{i1}I_{i,c}+ \varepsilon_{i}; \varepsilon_{i} \overset{iid}{\sim} N(0, \sigma^{2})$ las rectas generadas cambian su intercepto y pendiente.
+  \end{itemize}
+\end{enumerate}
+
+## Ejercicio con datos reales
+
+Considere el siguiente conjunto de datos que agrupa información sobre el índice multidimensional de calidad de vida de la ciudad de Medellín. **Se incluyen únicamente algunas variables** cuya descripción puede encontrarse **en el siguiente enlace:** https://medata.gov.co/dataset/1-002-09-000041. La variable categórica *NivelIngresos* se obtiene al **discretizar la covariable continua *Ingresos* en tres niveles** (*'Bajo', 'Medio' y 'Alto'*) de acuerdo con sus terciles.
+
+```{r, echo=FALSE}
+table <- data |>
+  dplyr::select(IMCV, Salud, Ingresos, NivelIngresos) |>
+  head(5)
+table |>
+  knitr::kable(booktabs= TRUE,
+  caption= "Información en análisis",
+               align= "c") |> # Kable Table
+  kableExtra::kable_styling(full_width= FALSE, latex_options=
+                              "HOLD_position", font_size= 10) |>
+  kableExtra::column_spec(1, bold = TRUE) # Boldness
+```
+
+Considere a *'IMCV'* como la variable respuesta. *Las covariables en análisis se especifican en la tabla mostrada con anterioridad.* **Suponga que los supuestos del modelo se cumplen. Dé respuesta a los siguientes planteamientos:**
+
+\begin{enumerate}
+\item Use el método de selección \textit{'Backward'} para determinar el mejor modelo (paso por paso) y compárelo con el resultado dado por el método \textit{'Forward'} y \textit{'Stepwise'}. \textbf{Use el conjunto de datos del taller anterior}.
+\item Considere el modelo de regresión lineal dado por la interacción $Y_{i} = \beta_{0}+ \beta_{1}X_{i1}+ \beta_{2}I_{i1}+ \beta_{3}I_{i2} + \beta_{4}X_{i1}I_{i1}+ \beta_{5}X_{i1}I_{i2} + \varepsilon_{i}; \varepsilon_{i} \overset{iid}{\sim} N(0, \sigma^{2})$, empleado para evaluar el cambio del índice multidimensional de calidad de vida \textit{'IMCV'} en función de \textit{'Salud'} (numérica) y \textit{'NivelIngresos'} (categórica), esta última con tres categorías \textit{'Bajo', 'Medio' y 'Alto'}. \textbf{Se toma como referencia la categoría 'Bajo'. Responda:}
+  \begin{itemize}
+  \item (a) Caracterice la información en análisis, reportando la ecuación de las rectas en función de los diferentes niveles, así como las rectas ajustadas.
+  \item (b) Interprete la estimación del parámetro $\beta_{4}$ en términos del problema.
+  \item (c) Determine si existe diferencia entre las ordenadas en el origen de las rectas correspondientes a las clases \textit{'Bajo'} y \textit{'Medio'} de \textit{'NivelIngresos'}. Escriba la hipótesis correspondiente y el criterio de decisión.
+  \item (d) Determine si el cambio promedio de \textit{'IMCV'} por unidad de cambio en \textit{'Salud'} es igual para las clases \textit{'Medio'} y \textit{'Alto'} de \textit{'NivelIngresos'}. Escriba la hipótesis correspondiente y el criterio de decisión.
+  \end{itemize}
+\end{enumerate}
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
