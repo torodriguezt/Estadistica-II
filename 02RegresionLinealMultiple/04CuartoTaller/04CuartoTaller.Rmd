@@ -102,7 +102,7 @@ Considere a *IMCV* como la variable respuesta. Las covariables consideradas en e
 
 \begin{enumerate}
 \item Escriba el modelo de regresión lineal múltiple, junto con sus supuestos. Deduzca a partir del modelo ajustado si podría haber problemas de multicolinealidad. 
-\item Realice un análisis de multicolinealidad a través del criterio del factor de inflación de varianza, número de condición, índice de condición y proporción de descomposición de varianza.
+\item Realice un análisis de multicolinealidad a través del criterio del factor de inflación de varianza, número de condición e índice de condición.
 \item Use el método de todas las regresiones posibles para seleccionar los mejores submodelos en función de los criterios $\text{R}^{2}_{p}, \text{R}_{adj(p)}^{2} \text{ (o bien } \text{MSE}_{p}) \text{ y } C_{p}$. \textbf{Posteriormente seleccione el mejor modelo.} 
 \end{enumerate}
 
