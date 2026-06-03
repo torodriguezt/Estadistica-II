@@ -1,0 +1,134 @@
+---
+output: 
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico Regresión Logística (1)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al sexto taller práctico del curso de **Estadística II** para la *Universidad Nacional de Colombia*, Sede Medellín, en el periodo 2025 - 1. Se brinda una introducción al análisis de regresión logística. El enfoque de este taller está en la comprensión del modelo de regresión logística, su ajuste mediante máxima verosimilitud y la *interpretación de sus parámetros*, empleando variables binarias y categóricas. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "regresión logística, función de enlace, razón de probabilidades, interpretación de parámetros"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "leaps","tidyr",
+               "exams","leaps","MASS","rsm","car","magrittr",
+               "readxl", "kableExtra")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+# Base ya simplificada (ver script 'limpieza_nacimientos.py'):
+# ~2000 filas, columnas: BAJO_PESO, EDAD_MADRE, CONSULTAS, GEMELAR, REGIMEN
+data <- read.csv("../data/nacimientos_simplificado.csv",
+                 stringsAsFactors = TRUE,
+                 encoding = "UTF-8")
+# Fijamos 'Contributivo' como nivel de referencia de la variable categórica
+data$REGIMEN <- relevel(factor(data$REGIMEN), ref = "Contributivo")
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos del modelo de regresión logística vistos en clase, se propone afrontar este taller en dos partes, una de teoría básica y otra práctica.
+
+**La solución para cada uno de los problemas se efectúa a partir del software estadístico R.**
+
+## Parte teórica
+
+De respuesta a las preguntas formuladas a continuación en base a la teoría tratada en clase. **Provea una interpretación de ser necesario**.
+
+\begin{enumerate}
+  \item Determine el valor de verdad de las siguientes afirmaciones.
+  \begin{itemize}
+    \item (a) En un modelo de regresión logística, la variable respuesta es de naturaleza binaria, tal que $\text{Y}_{i} \sim \text{ Ber}(\theta_{i})$; donde $\theta$ es la probabilidad de éxito en el $i$- ésimo ensayo.
+    \item (b) Los coeficientes $\underline{\beta}$ de un modelo de regresión logística se estiman numéricamente el método de mínimos cuadrados ordinarios, ya que la función de verosimilitud es no- lineal.
+    \item (c) Al incluir variables categóricas al modelo, es necesario definir una categoría de referencia, y la interpretación de tales coeficientes se realiza en comparación con tal referencia.
+    \item (d) El valor $\text{exp}(\beta_{j})$ se interpreta como el cambio en el logaritmo de los \textit{'odds'} por cada incremento unitario en la variable predictora $X_{j}$.
+  \end{itemize}
+\end{enumerate}
+
+## Ejercicio con datos reales
+
+Considere el siguiente conjunto de datos, una muestra de los *nacidos vivos registrados en el Hospital Manuel Uribe Ángel* (Envigado, Antioquia), cuyas madres residen en el Valle de Aburrá (Itagüí, Medellín, Envigado, Sabaneta, entre otros). Para facilitar el análisis en clase, la base original fue simplificada: se tomó una muestra reducida y se construyeron variables binarias, cuantitativas y categóricas a partir de la información cruda. La fuente original puede consultarse en el portal de *Datos Abiertos Colombia*.
+
+Las variables consideradas son:
+
+\begin{itemize}
+  \item \textbf{BAJO\_PESO} (respuesta): vale $1$ si el recién nacido tuvo \textit{bajo peso al nacer} (menos de $2500$ g) y $0$ en caso contrario.
+  \item \textbf{EDAD\_MADRE} (cuantitativa): edad de la madre, en años cumplidos.
+  \item \textbf{CONSULTAS} (cuantitativa): número de consultas o controles prenatales realizados durante el embarazo.
+  \item \textbf{GEMELAR}: vale $1$ si el embarazo fue múltiple (gemelar o más) y $0$ si fue simple.
+  \item \textbf{REGIMEN}: régimen de seguridad social de la madre, con niveles \textit{Contributivo} (nivel de referencia), \textit{Subsidiado} y \textit{NoAsegurado}.
+\end{itemize}
+
+```{r, echo=FALSE}
+table <- head(data, 5)
+table |> 
+  knitr::kable(booktabs= TRUE, 
+  caption= "Información en análisis", 
+               align= "c") |> # Kable Table
+  kableExtra::kable_styling(full_width= FALSE, latex_options= 
+                              "HOLD_position", font_size= 10) |> 
+  kableExtra::column_spec(1, bold = TRUE) # Boldness
+```
+
+Considere a *'BAJO\_PESO'* como la variable respuesta. *Las covariables en análisis se especifican en la tabla mostrada con anterioridad.* **De respuesta a los siguientes planteamientos:**
+
+\begin{enumerate}
+\item Ajuste un modelo de regresión logístico. Analice los componentes $\theta_{i}, g(\theta_{i}), \psi(\underline{\mathbf{x}}_{i})$. ¿Por qué se emplea la función \textit{'logit'} como función de enlace?
+\item Provea una \textit{interpretación directa} de los parámetros del modelo de regresión logística ajustado, así como una \textit{interpretación en términos de la razón de probabilidades}. Incluya coeficientes asociados a covariables cuantitativas (por ejemplo \textbf{EDAD\_MADRE}, \textbf{CONSULTAS}), binarias (\textbf{GEMELAR}) y categóricas (\textbf{REGIMEN}, respecto al nivel de referencia \textit{Contributivo}).
+\end{enumerate}
+
+```{=html}
+<!--
+# Apéndice: cómo se construyó la base simplificada
+# A partir de la base 'Nacidos Vivos - Hospital Manuel Uribe Angel'
+# (Datos Abiertos Colombia, recurso udqu-ifxr), descargada vía API:
+#   - BAJO_PESO  <- peso_gramos (< 2500 g = 1; >= 2500 g = 0)
+#   - EDAD_MADRE <- edad_madre (años)
+#   - CONSULTAS  <- n_mero_consultas_prenatales
+#   - GEMELAR    <- multiplicidad_embarazo (Doble/Triple = 1; Simple = 0)
+#   - REGIMEN    <- r_gimen_seguridad (Contributivo / Subsidiado / NoAsegurado)
+# Ver el script 'limpieza_nacimientos.py' (muestra de 2000 filas, semilla 2025).
+
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
