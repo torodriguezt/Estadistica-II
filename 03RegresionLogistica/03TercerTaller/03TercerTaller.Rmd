@@ -20,6 +20,8 @@ endnote: no
 language: "es"
 header-includes:
   - \usepackage{bm}
+  - \usepackage{array}
+  - \usepackage{calc}
 ---
 
 ```{r setup, include=FALSE}
@@ -65,16 +67,16 @@ Con el propósito de profundizar en los conceptos del modelo de regresión Poiss
 
 ## Ejercicio con datos reales
 
-Considere el siguiente conjunto de datos, una muestra de los *nacidos vivos registrados en el Hospital Manuel Uribe Ángel* (Envigado, Antioquia). En este análisis se estudia qué factores explican la cantidad de controles prenatales realizados por las madres durante el embarazo.
+Considere el siguiente conjunto de datos, una muestra de los *nacidos vivos registrados en el Hospital Manuel Uribe Ángel* (Envigado, Antioquia). En este análisis se estudia qué factores explican el **número de hijos nacidos vivos previos** (paridad) que ha tenido cada madre.
 
 ```{r, echo=FALSE}
 knitr::kable(head(data, 5),
              booktabs = TRUE,
-             caption = "Información en análisis",
+             caption = "Dataset",
              align = "c")
 ```
 
-Considere a *'CONSULTAS'* como la variable respuesta (conteo de controles prenatales). *Las covariables seleccionadas se muestran en la tabla anterior.* **Dé respuesta a los siguientes planteamientos:**
+Considere a *'NUM\_HIJOS'* como la variable respuesta (conteo de hijos nacidos vivos previos). *Las covariables seleccionadas se muestran en la tabla anterior.* **Dé respuesta a los siguientes planteamientos:**
 
 \begin{enumerate}
 \item Ajuste un modelo de regresión Poisson, ¿por qué es adecuado para este tipo de problemas?
