@@ -1,0 +1,113 @@
+---
+output: 
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico Regresión Logística (2)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/Itsssach/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al séptimo taller práctico del curso de **Estadística II** para la *Universidad Nacional de Colombia*, Sede Medellín, en el periodo 2026 - 1. Se brinda una introducción al análisis de regresión. El enfoque de este taller está en la evaluación del rendimiento de la regresión logística. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "regresión múltiple, secuencialidad, interacción"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "leaps","tidyr",
+               "exams","leaps","MASS","rsm","car","magrittr",
+               "readxl")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+data <- read.csv("data/nacimientos_simplificado.csv",
+                 stringsAsFactors = TRUE,
+                 encoding = "UTF-8")
+data$REGIMEN <- relevel(factor(data$REGIMEN), ref = "Contributivo")
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos del modelo de regresión logística vistos en clase, se propone afrontar este taller en dos partes, una de teoría básica y otra práctica.
+
+**La solución para cada uno de los problemas se efectúa a partir del software estadístico R.**
+
+## Parte teórica
+
+Dé respuesta a las preguntas formuladas a continuación en base a la teoría tratada en clase. **Provea una interpretación de ser necesario**.
+
+\begin{enumerate}
+  \item Determine el valor de verdad de las siguientes afirmaciones.
+  \begin{itemize}
+    \item (a) El modelo de regresión logística $\text{logit}(\theta_{i}) = \psi(\mathbf{\underline{x}}_{i})$ clasifica directamente como éxito o fracaso cada observación provista.
+    \item (b) La tasa de falsos positivos se calcula como $[n_{01}/(n_{00}+ n_{01})]$, e indica las observaciones que fueron clasificadas como positivas cuando eran realmente verdaderas. 
+    \item (c) La curva ROC muestra cómo cambian la sensibilidad y las especificidad a medida que varía el punto de corte $\theta^{*}$. De aquí se deriva una métrica importante, que es el AUC.
+    \item (d) La selección del punto de corte $\theta^{*}$ impacta directamente el desempeño del modelo logístico como clasificador, -incluso la matriz de confusión se ve afectada-.
+    \item (e) Un modelo con un AUC igual a $0.5$ indica que clasifica las observaciones de manera aleatoria.
+    \item (d) El estadístico de prueba $\chi_{c} = D_{0}^{2}- D^{2}$, con una región de rechazo asociada $\text{R}_{c}= \{\chi_{c} > \chi_{p, \alpha} \}$ se emplea para probar la significancia global del modelo, mientras que se prefiere la prueba \textit{t- student} para la significancia individual.
+
+  \end{itemize}
+\end{enumerate}
+
+## Ejercicio con datos reales
+
+Considere el siguiente conjunto de datos, una muestra de los *nacidos vivos registrados en el Hospital Manuel Uribe Ángel* (Envigado, Antioquia). Las variables son las mismas descritas en el taller anterior: **BAJO\_PESO**, **EDAD\_MADRE**, **CONSULTAS**, **GEMELAR** y **REGIMEN**. Retome el modelo ajustado en el primer taller como punto de partida para este análisis de rendimiento.
+
+```{r, echo=FALSE}
+knitr::kable(head(data, 5),
+             booktabs = TRUE,
+             caption = "Información en análisis",
+             align = "c")
+```
+
+Considere a *'BAJO\_PESO'* como la variable respuesta. *Las covariables en análisis se especifican en la tabla mostrada con anterioridad.* **Dé respuesta a los siguientes planteamientos:**
+
+\begin{enumerate}
+\item Realice una prueba de significancia de los parámetros individuales. Provea una \textit{interpretación directa} de los parámetros del modelo de regresión logística, así como una \textit{interpretación en términos de la razón de probabilidades}.
+\item Realice una predicción de futuras observaciones. Utilice las probabilidades obtenidas para la construcción un clasificador logístico con etiquetas.
+\item Analice el rendimiento del modelo a través de la curva ROC y AUC. Interprete. 
+\item Halle un valor de corte $\theta^{*}$ óptimo que permita mantener una \textbf{tasa de clasificación acertada alta}, minimizando el número de falsos negativos.
+\item Reporte la matriz de confusión y la tasa de clasificación correcta. ¿Cómo cambian estas matrices con diferentes valores de $\theta^{*}$?
+\end{enumerate}
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
