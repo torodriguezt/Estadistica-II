@@ -119,7 +119,7 @@ Considere a *'IMCV'* como la variable respuesta. *Las covariables en análisis s
   \item (a) Caracterice la información en análisis, reportando la ecuación de las rectas en función de los diferentes niveles, así como las rectas ajustadas.
   \item (b) Interprete la estimación del parámetro $\beta_{4}$ en términos del problema.
   \item (c) Determine si existe diferencia entre las ordenadas en el origen de las rectas correspondientes a las clases \textit{'Bajo'} y \textit{'Medio'} de \textit{'NivelIngresos'}. Escriba la hipótesis correspondiente y el criterio de decisión.
-  \item (d) Determine si el cambio promedio de \textit{'IMCV'} por unidad de cambio en \textit{'Salud'} es igual para las clases \textit{'Medio'} y \textit{'Alto'} de \textit{'NivelIngresos'}. Escriba la hipótesis correspondiente y el criterio de decisión.
+  \item (d) Determine si el cambio promedio de \textit{'IMCV'} por unidad de cambio en \textit{'Salud'} es igual para las clases \textit{'Bajo'} y \textit{'Medio'} de \textit{'NivelIngresos'}. Escriba la hipótesis correspondiente y el criterio de decisión.
   \end{itemize}
 \end{enumerate}
 

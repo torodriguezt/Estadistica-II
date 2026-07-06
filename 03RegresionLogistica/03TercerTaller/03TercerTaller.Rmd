@@ -1,0 +1,97 @@
+---
+output: 
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico Regresión Poisson (1)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/Itsssach/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al octavo taller práctico del curso de **Estadística II** para la *Universidad Nacional de Colombia*, Sede Medellín, en el periodo 2026 - 1. Se brinda una introducción al análisis de regresión. El enfoque de este taller está en la comprensión del modelo de regresión Poisson. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "regresión poisson"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{array}
+  - \usepackage{calc}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "leaps","tidyr",
+               "exams","leaps","MASS","rsm","car","magrittr",
+               "readxl")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+data <- read.csv("data/nacimientos_simplificado.csv",
+                 stringsAsFactors = TRUE,
+                 encoding = "UTF-8")
+data$REGIMEN <- relevel(factor(data$REGIMEN), ref = "Contributivo")
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos del modelo de regresión Poisson vistos en clase, se propone el siguiente ejercicio práctico.
+
+**La solución para cada uno de los problemas se efectúa a partir del software estadístico R.**
+
+## Ejercicio con datos reales
+
+Considere el siguiente conjunto de datos, una muestra de los *nacidos vivos registrados en el Hospital Manuel Uribe Ángel* (Envigado, Antioquia). En este análisis se estudia qué factores explican el **número de hijos nacidos vivos previos** (paridad) que ha tenido cada madre.
+
+```{r, echo=FALSE}
+knitr::kable(head(data, 5),
+             booktabs = TRUE,
+             caption = "Dataset",
+             align = "c")
+```
+
+Considere a *'NUM\_HIJOS'* como la variable respuesta (conteo de hijos nacidos vivos previos). *Las covariables seleccionadas se muestran en la tabla anterior.* **Dé respuesta a los siguientes planteamientos:**
+
+\begin{enumerate}
+\item Ajuste un modelo de regresión Poisson, ¿por qué es adecuado para este tipo de problemas?
+\item Realice la prueba de significancia global.
+\item Realice la prueba de significancia individual.
+\item ¿Cuál es un valor de $\lambda$ estimado para este problema?
+\end{enumerate}
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
