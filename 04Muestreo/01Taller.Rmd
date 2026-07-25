@@ -1,0 +1,156 @@
+---
+output:
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico Muestreo"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al noveno taller práctico del curso de **Estadística II** de la *Universidad Nacional de Colombia*, Sede Medellín, en el periodo 2026-1. Se brinda una introducción al muestreo estadístico. El enfoque de este taller está en la comprensión de los elementos básicos del muestreo aleatorio simple y el muestreo aleatorio estratificado, así como en el uso de estimadores poblacionales. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "muestreo, estimadores, estratificación"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{booktabs}
+  - \usepackage{longtable}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{wrapfig}
+  - \usepackage{float}
+  - \usepackage{colortbl}
+  - \usepackage{pdflscape}
+  - \usepackage{tabu}
+  - \usepackage{threeparttable}
+  - \usepackage{threeparttablex}
+  - \usepackage[normalem]{ulem}
+  - \usepackage{makecell}
+  - \usepackage{xcolor}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "leaps","tidyr",
+               "exams","leaps","MASS","rsm","car","magrittr",
+               "readxl", "kableExtra", "truncnorm")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+datos <- read.csv("data/data.csv") |>
+  dplyr::select(DIRECTORIO, SECUENCIA_P, ORDEN.x, CAR, SEC,
+                CONS, REC, ING, I_HOGAR) |>
+  dplyr::mutate(across(c(CAR, SEC, CONS, REC), as.factor),
+                across(c(DIRECTORIO, SECUENCIA_P, ORDEN.x),
+                as.character)) |>
+  dplyr::mutate(across(
+    where(is.factor), ~ case_when(. == 1 ~ 1, . == 2 ~ 0,
+    TRUE ~ as.numeric(as.character(.)))))
+# Se conserva la variable de ingreso original y la variable de
+# cobertura del ingreso (ING), lo que permite ilustrar tanto el
+# muestreo aleatorio simple como el muestreo aleatorio estratificado.
+# -----------------------------
+#datos |> write.csv("data/datos.csv")
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos de muestreo estadístico vistos en clase, se propone afrontar este taller en dos partes, una de teoría básica y otra práctica.
+
+**La solución para cada uno de los problemas se efectúa a partir del software estadístico R.**
+
+## Parte teórica
+
+Dé respuesta a las preguntas formuladas a continuación con base en la teoría tratada en clase. **Provea una interpretación de ser necesario**.
+
+\begin{enumerate}
+  \item Determine el valor de verdad de las siguientes afirmaciones relativas al \textbf{muestreo aleatorio simple}.
+  \begin{itemize}
+    \item (a) En el muestreo probabilístico se puede definir el número de muestras posibles que pueden seleccionarse de una población con una probabilidad $\text{P}(s) > 0; \forall s$ preestablecida mediante un mecanismo adecuado.
+    \item (b) Un marco muestral debe listar todas las unidades de la población objetivo sin incluir unidades ajenas. Incluye un código único de identificación, organización sistemática y con información relevante.
+    \item (c) Una buena muestra es una \textbf{muestra representativa}, que reproduce las características de interés que existen en la población de la forma más cercana posible.
+    \item (d) En el muestreo aleatorio simple sin reemplazo, la probabilidad de seleccionar cualquier unidad es $n/N$, donde, $n$, el tamaño muestral, no influye en la precisión de las estimaciones.
+    \item (e) La varianza poblacional $\sigma^{2}$ puede ser estimada a partir del estimador insesgado $S^{2}$, que considera un factor de corrección por población finita.
+  \end{itemize}
+  \item Determine el valor de verdad de las siguientes afirmaciones relativas al \textbf{muestreo aleatorio estratificado}.
+  \begin{itemize}
+    \item (a) Un muestreo aleatorio simple conllevará estimaciones más precisas que el muestreo aleatorio estratificado incluso si existen subgrupos disjuntos previamente identificados.
+    \item (b) Para realizar un muestreo aleatorio estratificado se debe garantizar que los estratos son suficientemente heterogéneos entre sí, además de que las unidades intraestrato son adecuadamente homogéneas.
+    \item (c) Se establece la restricción $N =\sum_{i = 1}^{L}N_{i}$ para la ejecución de un muestreo aleatorio estratificado, donde $L$ refiere al número de individuos que deben ser considerados.
+    \item (d) El factor de afijación muestral $\psi_{i}$ cumple la restricción $\psi_{i} > 0$, además de que su estimación depende de la información conocida, permitiendo la determinación de las submuestras $n_{i}$.
+  \end{itemize}
+\end{enumerate}
+
+## Ejercicio con datos reales
+
+La encuesta de calidad de vida **(ECV)** en Colombia, desarrollada por el *Departamento Administrativo Nacional de Estadística (DANE)*, es una herramienta estadística empleada para medir condiciones de vida de los hogares y las personas a lo largo del país. Es útil para cuantificar el bienestar de los habitantes. Considere el encabezado de la encuesta del año $2023$ a continuación.
+
+```{r, echo=FALSE}
+table <- head(datos, 5)
+table |>
+  knitr::kable(booktabs= TRUE,
+  caption= "Información en análisis",
+               align= "c") |> # Kable Table
+  kableExtra::kable_styling(full_width= FALSE, latex_options=
+                              "HOLD_position", font_size= 10) |>
+  kableExtra::column_spec(1, bold = TRUE) # Boldness
+```
+
+Considere el **ingreso del hogar** como una variable continua. Las variables *posesión de automóvil, seguridad, posesión de consola de videojuegos, posesión de propiedad recreativa* son categóricas (con dos niveles). Se considera además la variable que refiere a la *cobertura del ingreso* (con tres niveles), la cual se emplea como criterio de estratificación. De solución a los planteamientos a continuación.
+
+### Muestreo aleatorio simple
+
+\begin{enumerate}
+\item Realice un muestreo aleatorio simple sin reemplazo sobre la información en análisis, ¿Las unidades muestrales son homogéneas? ¿Qué puede concluir al respecto?
+\item Estime el ingreso total de los hogares $\tau$, así como el ingreso promedio percibido $\mu$. Calcule los correspondientes intervalos de confianza. Interprete estos resultados.
+\item Estime el total de hogares que poseen automóvil $A$, así como la proporción de hogares que se perciben como seguros $p$. Calcule los correspondientes intervalos de confianza. Interprete estos resultados.
+\item Determine el tamaño de muestra mínimo necesario para estimar la proporción de personas que poseen propiedad recreativa con un límite para el error de estimación del $2 \%$ y una confianza del $95 \%$.
+\end{enumerate}
+
+### Muestreo aleatorio estratificado
+
+\begin{enumerate}
+\setcounter{enumi}{4}
+\item Realice un muestreo aleatorio estratificado sin reemplazo sobre la información en análisis en función de la cobertura del ingreso. \textbf{Emplee la afijación proporcional y la afijación de Neyman.} ¿Las unidades muestrales intraestrato son homogéneas? ¿Los estratos son suficientemente heterogéneos entre sí?
+\item Estime el ingreso total de los hogares $\tau$, así como el ingreso promedio percibido $\mu$. Calcule los correspondientes intervalos de confianza y compare la precisión obtenida frente al muestreo aleatorio simple. Interprete estos resultados.
+\item Determine el tamaño de muestra mínimo necesario para estimar la proporción de personas que poseen propiedad recreativa con un límite para el error de estimación del $2 \%$ y una confianza del $95 \%$. \textbf{Para los $p_{i}$ utilice las estimaciones intraestrato y para el valor de la afijación $\psi_{i}$ emplee la afijación proporcional}.
+\end{enumerate}
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
