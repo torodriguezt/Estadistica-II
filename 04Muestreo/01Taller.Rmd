@@ -98,7 +98,6 @@ Dé respuesta a las preguntas formuladas a continuación con base en la teoría 
     \item (b) Un marco muestral debe listar todas las unidades de la población objetivo sin incluir unidades ajenas. Incluye un código único de identificación, organización sistemática y con información relevante.
     \item (c) Una buena muestra es una \textbf{muestra representativa}, que reproduce las características de interés que existen en la población de la forma más cercana posible.
     \item (d) En el muestreo aleatorio simple sin reemplazo, la probabilidad de seleccionar cualquier unidad es $n/N$, donde, $n$, el tamaño muestral, no influye en la precisión de las estimaciones.
-    \item (e) La varianza poblacional $\sigma^{2}$ puede ser estimada a partir del estimador insesgado $S^{2}$, que considera un factor de corrección por población finita.
   \end{itemize}
   \item Determine el valor de verdad de las siguientes afirmaciones relativas al \textbf{muestreo aleatorio estratificado}.
   \begin{itemize}
@@ -106,6 +105,7 @@ Dé respuesta a las preguntas formuladas a continuación con base en la teoría 
     \item (b) Para realizar un muestreo aleatorio estratificado se debe garantizar que los estratos son suficientemente heterogéneos entre sí, además de que las unidades intraestrato son adecuadamente homogéneas.
     \item (c) Se establece la restricción $N =\sum_{i = 1}^{L}N_{i}$ para la ejecución de un muestreo aleatorio estratificado, donde $L$ refiere al número de individuos que deben ser considerados.
     \item (d) El factor de afijación muestral $\psi_{i}$ cumple la restricción $\psi_{i} > 0$, además de que su estimación depende de la información conocida, permitiendo la determinación de las submuestras $n_{i}$.
+    \item (e) La estimación de un parámetro poblacional cualquiera $\hat{\theta}$ corresponde a una suma ponderada de los parámetros estimados por estrato $\hat{\theta}_{i}$ por el factor de afijación definido $\psi_{i}$.
   \end{itemize}
 \end{enumerate}
 
