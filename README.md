@@ -15,9 +15,9 @@ Es de especial interés tener en cuenta la siguiente información:
 
 **(3). Herramientas e instalación:** Se recomienda **RStudio** como IDE para R y **Visual Studio Code** para Python.
 
-| Herramienta | Descarga | Guía de instalación |
-| --- | --- | --- |
-| R + RStudio | [CRAN](https://cran.r-project.org/) · [Posit](https://posit.co/download/rstudio-desktop/) | [Video tutorial](https://www.youtube.com/watch?v=hbgzW3Cvda4) |
+| Herramienta      | Descarga                                                                                                 | Guía de instalación                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| R + RStudio      | [CRAN](https://cran.r-project.org/) · [Posit](https://posit.co/downloads)                                 | [Video tutorial](https://www.youtube.com/watch?v=hbgzW3Cvda4) |
 | Python + VS Code | [python.org](https://www.python.org/downloads/) · [code.visualstudio.com](https://code.visualstudio.com/) | [Video tutorial](https://www.youtube.com/watch?v=zMUgJbbLLRw) |
 
 **(4). Medios de comunicación:** [torodriguezt@unal.edu.co](mailto:torodriguezt@unal.edu.co)
