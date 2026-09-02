@@ -1,0 +1,147 @@
+---
+output: 
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico: Regresión Lineal Múltiple (1)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al primer taller práctico del curso de **Estadística II** de la *Universidad Nacional de Colombia*, Sede Medellín, en el período 2026-02. Se brinda una introducción al análisis de regresión. El enfoque de este taller se centra en la comprensión del modelo de regresión lineal múltiple a nivel matricial. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "regresión múltiple"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{float}
+  - \usepackage{threeparttable}
+  - \usepackage{threeparttablex}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+#if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "leaps","tidyr",
+               "exams","leaps","MASS","rsm","car","magrittr",
+               "readxl", "kableExtra")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+data <- read.csv("data/imcv_modelo_limpio.csv")|> 
+  dplyr::select(IMCV, Ingresos, 
+                Salud, Trabajo, Capital)
+colnames(data) <- c("IMCV", "Ingresos", "Salud", "Trabajo", "Capital")
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos del modelo de regresión lineal múltiple vistos en clase, se propone afrontar este taller en dos partes: una de teoría básica y otra práctica.
+
+**La parte computacional puede resolverse indistintamente en R o en Python.** Ambos lenguajes son válidos y se publicará la solución en los dos; use el que le resulte más cómodo.
+
+## Parte teórica
+
+Dé respuesta a las preguntas formuladas a continuación con base en la teoría tratada en clase. **Provea una interpretación cuando sea necesario**.
+
+\begin{enumerate}
+  \item Considere el siguiente modelo de regresión lineal múltiple con $k$ variables regresoras y $p = k+1$ parámetros asociados:
+\[
+Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + \cdots + \beta_{k}X_{ik} + \varepsilon_{i}, 
+\quad \varepsilon_{i} \overset{iid}{\sim} N(0, \sigma^{2}).
+\]
+  \begin{itemize}
+    \item (a) Escriba el modelo de forma matricial junto con sus supuestos. \textbf{Especifique las dimensiones de cada componente.}
+    \item (b) Demuestre que el estimador $\bm{\hat{\beta}}$ que se obtiene a través del método de mínimos cuadrados es un estimador insesgado para $\bm{\beta}$. 
+    \item (c) Obtenga una expresión para la matriz de varianzas-covarianzas de $\bm{\hat{\beta}}$.  
+  \end{itemize}
+  \item Determine el valor de verdad de las siguientes afirmaciones.
+  \begin{itemize}
+\item (a) Considere los siguientes modelos de regresión múltiple:
+
+\begin{align*}
+(1)\quad Y_{i} &= \beta_{0} + \sum_{j = 1}^{k} \beta_{j} (X_{ij})^{1/2} + \varepsilon_{i} \\
+(2)\quad \ln(Y_{i}) &= \beta_{0} + \sum_{j = 1}^{k} \beta_{j} \ln(X_{ij}) + \varepsilon_{i}
+\end{align*}
+
+con $\varepsilon_{i} \overset{iid}{\sim} N(0, \sigma^{2})$.
+
+Los modelos anteriores no son modelos lineales, puesto que se altera la forma de la superficie de respuesta.
+    \item (b) Bajo los supuestos del modelo de regresión lineal múltiple, $\varepsilon_{i} \overset{iid}{\sim} N(0, \sigma^{2})$, el estimador para los parámetros $\bm{\hat{\beta}}$ obtenido a través del método de mínimos cuadrados ordinarios es el mismo que el de máxima verosimilitud, así como para la varianza $\hat{\sigma}^{2}$. \textbf{Explique}.
+    \item (c) La matriz de varianzas-covarianzas siempre es simétrica respecto a su diagonal principal, además, siempre tiene unos en su diagonal principal.
+    \item (d) El parámetro $\beta_{0}$, como la respuesta media de $Y$, es únicamente interpretable si el conjunto de observaciones $(X_{1}, X_{2}, ..., X_{k}) = (0, 0, ..., 0)$ está incluido en el rango experimental. 
+    \item (e) Los parámetros $\beta_{j}, j = 1, ..., k$ indican el cambio en la respuesta media de $Y$ por unidad de incremento en la respectiva variable $X_{j}$.
+  \end{itemize}
+\end{enumerate}
+
+## Ejercicio con datos reales
+
+Considere el siguiente conjunto de datos que agrupa información sobre el índice multidimensional de calidad de vida de la ciudad de Medellín. **Se incluyen únicamente algunas variables** cuya descripción puede encontrarse **en el siguiente enlace:** https://medata.gov.co/dataset/1-002-09-000041
+
+```{r, echo=FALSE}
+table <- head(data, 5)
+
+table |>
+  knitr::kable(
+    booktabs = TRUE,
+    caption = "Información en análisis",
+    align = "c",
+    col.names = c("IMCV", "Ingresos", "Salud", "Trabajo", "Capital")
+  ) |>
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    latex_options = "HOLD_position",
+    font_size = 10
+  ) |>
+  kableExtra::column_spec(1, bold = TRUE)
+
+```
+
+Considere a *IMCV* como la variable respuesta. Las covariables consideradas en el análisis se especifican en la tabla anterior. **Dé respuesta a los siguientes planteamientos:**
+
+\begin{enumerate}
+\item Determine cuál es la matriz de diseño ($\mathbf{X}$) para este problema en específico. Calcule el vector de parámetros estimados $\bm{\hat{\beta}}$. Brinde una interpretación adecuada.
+\item Obtenga una estimación para la varianza ($\hat{\sigma}^{2}$).
+\item Obtenga una estimación de la matriz de varianzas-covarianzas de $\bm{\hat{\beta}}$.
+\end{enumerate}
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
