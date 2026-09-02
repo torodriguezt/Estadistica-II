@@ -8,11 +8,21 @@ Es de especial interés tener en cuenta la siguiente información:
 
 - **Viernes (Virtual).** A través de Google Meet. (17:00 - 19:00)
 
-**(2). Conocimientos previos:** Estadística I, en particular, pruebas de hipótesis e intervalos de confianza (muy importantes). Es deseable también conocimientos básicos en álgebra lineal y de programación en R o Python. Se recomienda RStudio como IDE para R y Visual Studio Code para Python. Una guía simple de instalación es la siguiente: https://www.youtube.com/watch?v=hbgzW3Cvda4
+**(2). Conocimientos previos:**
 
-**(3). Medios de comunicación:** torodriguezt@unal.edu.co
+- **Indispensable:** Estadística I, en particular pruebas de hipótesis e intervalos de confianza.
+- **Deseable:** nociones básicas de álgebra lineal (vectores, matrices, producto matricial e inversa) y de programación en R o Python.
 
-**(4). Grabaciones:** Estarán hospedadas en Google Drive. [Enlace Drive](https://drive.google.com/drive/folders/1y4_9sj74vLJJHkjjSHci1LKpp5o3jQ0x?usp=sharing)
+**(3). Herramientas e instalación:** Se recomienda **RStudio** como IDE para R y **Visual Studio Code** para Python.
+
+| Herramienta | Descarga | Guía de instalación |
+| --- | --- | --- |
+| R + RStudio | [CRAN](https://cran.r-project.org/) · [Posit](https://posit.co/download/rstudio-desktop/) | [Video tutorial](https://www.youtube.com/watch?v=hbgzW3Cvda4) |
+| Python + VS Code | [python.org](https://www.python.org/downloads/) · [code.visualstudio.com](https://code.visualstudio.com/) | [Video tutorial](https://www.youtube.com/watch?v=zMUgJbbLLRw) |
+
+**(4). Medios de comunicación:** [torodriguezt@unal.edu.co](mailto:torodriguezt@unal.edu.co)
+
+**(5). Grabaciones:** Estarán hospedadas en Google Drive — [Enlace Drive](https://drive.google.com/drive/folders/1y4_9sj74vLJJHkjjSHci1LKpp5o3jQ0x?usp=sharing).
 
 ## Temas del curso
 
