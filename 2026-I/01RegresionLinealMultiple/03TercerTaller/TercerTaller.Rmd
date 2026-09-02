@@ -1,0 +1,144 @@
+---
+output: 
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico Regresión Lineal Múltiple (3)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al tercer taller práctico del curso de **Estadística II** para la *Universidad Nacional de Colombia*, Sede Medellín, en el periodo 2026-01. Se brinda una introducción al análisis de regresión. El enfoque de este taller está en la comprensión de los supuestos del modelo, puntos de balanceo, atípicos e influenciales, así como en la respuesta media y en la predicción. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "regresión múltiple, supuestos, influenciales, balanceo"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{float}
+  - \usepackage{threeparttable}
+  - \usepackage{threeparttablex}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "leaps","tidyr",
+               "exams","leaps","MASS","rsm","car","magrittr",
+               "readxl", "kableExtra")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+data <- read.csv("data/imcv_modelo_limpio.csv")
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos del modelo de regresión lineal múltiple vistos en clase, se propone abordar este taller en dos partes: una de teoría básica y otra práctica.
+
+**La solución para cada uno de los problemas se efectúa a partir del software estadístico R.**
+
+## Parte teórica
+
+Dé respuesta a las preguntas formuladas a continuación con base en la teoría tratada en clase. **Provea una interpretación de ser necesario.**
+
+\begin{enumerate}
+  \item Pruebe que en el modelo de regresión lineal múltiple que incluye intercepto, la suma de los residuales es igual a cero.
+  \item Determine el valor de verdad de las siguientes afirmaciones.
+  \begin{itemize}
+    \item (a) Bajo los supuestos del modelo de regresión lineal múltiple, se cumple que \textbf{la respuesta media estimada} $\hat{Y}_{0} \sim N(\text{E}[Y|\mathbf{\underline{x}}_{0}], \sigma^{2} \mathbf{\underline{x}}_{0}(\mathbf{X'X})^{-1}\mathbf{\underline{x}}_{0})$. 
+    \item (b) El error de predicción $\hat{Y}_{0}- Y_{0}$ tiene una varianza asociada dada por $\sigma^{2} \mathbf{\underline{x}}_{0}(\mathbf{X'X})^{-1}\mathbf{\underline{x}}_{0}$, al igual que $\hat{Y}_{0}$. De aquí que, si se sabe que $\mathbf{\underline{x}}_{0} = [1, x_{01}, x_{02}, ..., x_{0k}]'$ es un punto en que no se comete extrapolación, entonces es correcto afirmar que $\mathbf{\underline{x}}_{0}(\mathbf{X'X})^{-1} \mathbf{\underline{x}}_{0}' < 1$.
+    \item (c) El procedimiento analítico \textbf{Shapiro-Wilk}, cuyo juego de hipótesis está dado por: $\text{H}_{0}: \varepsilon_{i} \sim N(0, \sigma^{2}) \text{ vs } \text{H}_{1}: \varepsilon_{i} \nsim N(0, \sigma^{2}), i = 1, ..., n$, permite determinar la normalidad de los residuales del modelo de regresión.
+    \item (d) Si al validar los supuestos del modelo de regresión lineal múltiple se detecta varianza no homogénea, adicionar términos cuadráticos a las variables predictoras permite corregirla, ya que la heterocedasticidad siempre se debe a una especificación funcional incorrecta del modelo.
+    \item (e) Una observación atípica está separada del resto de las observaciones en su valor de respuesta $Y$, aunque no afecta los resultados del ajuste. \textbf{Su evaluación se realiza a través del residual estandarizado $|d_{i}| > 3$}.
+    \item (f) Se cumple que una observación $i$ es de balanceo si está definida en el espacio de la respuesta $Y$ y si se cumple que $h_{ii} > 2p/n$, afectando estadísticas como el $\text{R}^{2}$ y los errores estándar de los coeficientes del modelo.
+    \item (g) Se cumple que $\text{D}_{i} > 1,  |\text{DFBETAS}_{j(i)}| > (2/\sqrt{n}) \text{ y } |\text{DFFITS}_{i}| > (2\sqrt{p/n})$ simultáneamente para toda observación categorizada como influencial en un conjunto de datos.
+  \end{itemize}
+  \item Seleccione las expresiones adecuadas que se muestran a continuación, interprételas y corrija las expresiones incorrectas.
+$$
+  \begin{aligned}
+    &\begin{array}{ll}
+        \textbf{a.} \quad \mathbf{d_i} = \frac{e_i}{\sqrt{\text{MSE}}} &        
+        \textbf{b.} \quad \mathbf{r_i} = \frac{d_i}{\sqrt{1-h_{ii}}} \\
+        \textbf{c.} \quad \textbf{DFBETAS}_{j(i)} =                   \frac{\hat{\beta_{j}}- \hat{\beta}_{j(i)}}{\sqrt{\text{MSE}_{(i)}c_{jj}}} & 
+        \textbf{d.} \quad \textbf{DFFITS}_i = \frac{\hat{y}_i - y_{i(0)}}{\sqrt{c_{jj} \text{MSE}_{(i)}}}
+    \end{array}
+\end{aligned}
+$$
+\end{enumerate}
+
+## Ejercicio con datos reales
+
+Considere el siguiente conjunto de datos que agrupa información sobre el índice multidimensional de calidad de vida de la ciudad de Medellín. **Se incluyen únicamente algunas variables**, cuya descripción puede encontrarse **en el siguiente enlace:** https://medata.gov.co/dataset/1-002-09-000041
+
+```{r, echo=FALSE}
+table <- head(data, 5)
+
+table |>
+  knitr::kable(
+    booktabs = TRUE,
+    caption = "Información en análisis",
+    align = "c",
+    col.names = c("IMCV", "Ingresos", "Salud", "Trabajo", "Capital")
+  ) |>
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    latex_options = "HOLD_position",
+    font_size = 10
+  ) |>
+  kableExtra::column_spec(1, bold = TRUE)
+
+```
+
+Considere a *IMCV* como la variable respuesta. Las covariables consideradas en el análisis se especifican en la tabla anterior. **Dé respuesta a los siguientes planteamientos:**
+
+\begin{enumerate}
+\item Verifique los supuestos del modelo de regresión, esto es, $\varepsilon_{i} \overset{iid}{\sim} N(0, \sigma^{2})$, a partir de los procedimientos apropiados para ello. 
+\item Identifique puntos atípicos y puntos de balanceo a través de un criterio gráfico y analítico. \textbf{¿Podrían ser estos puntos a su vez influenciales?}
+\item Identifique puntos influenciales. \textbf{Compare los criterios empleados para ello.}
+\item Realice inferencia para $\mathbf{\underline{x}}_{01} = [1,\; 1.6921,\; 3.3214,\; 0.6125,\; 6.1313]'$ y 
+\\
+$\mathbf{\underline{x}}_{02} = [1,\; 3.6534,\; 4.2594,\; 0.7646,\; 12.7477]'$, con su respectivo intervalo de predicción. 
+\textbf{Verifique primero si no se trata de un punto de extrapolación.}
+
+\end{enumerate}
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
