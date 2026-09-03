@@ -13,12 +13,13 @@ Es de especial interés tener en cuenta la siguiente información:
 - **Indispensable:** Estadística I, en particular pruebas de hipótesis e intervalos de confianza.
 - **Deseable:** nociones básicas de álgebra lineal (vectores, matrices, producto matricial e inversa) y de programación en R o Python.
 
-**(3). Herramientas e instalación:** Se recomienda **RStudio** como IDE para R y **Visual Studio Code** para Python.
+**(3). Herramientas e instalación:** Se recomienda **RStudio** como IDE para R y **Visual Studio Code** para Python. Los talleres se pueden resolver en cualquiera de los dos lenguajes. Las soluciones en Python se publican como **notebooks** (`.ipynb`), que se abren desde VS Code.
 
 | Herramienta      | Descarga                                                                                                 | Guía de instalación                                        |
 | ---------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
 | R + RStudio      | [CRAN](https://cran.r-project.org/) · [Posit](https://posit.co/downloads)                                 | [Video tutorial](https://www.youtube.com/watch?v=hbgzW3Cvda4) |
 | Python + VS Code | [python.org](https://www.python.org/downloads/) · [code.visualstudio.com](https://code.visualstudio.com/) | [Video tutorial](https://www.youtube.com/watch?v=zMUgJbbLLRw) |
+| Jupyter Notebook en VS Code | Extensiones **Python** y **Jupyter**| [Video tutorial](https://www.youtube.com/watch?v=JBG9RA8AZpQ) |
 
 **(4). Medios de comunicación:** [torodriguezt@unal.edu.co](mailto:torodriguezt@unal.edu.co)
 
@@ -50,6 +51,7 @@ Cada carpeta principal de un tema (Ej: `01RegresionLinealMultiple`) contiene las
 | `Solucion.R`   | Código usado en el taller sin personalizaciones gráficas.                    |
 | `Solucion.Rmd` | Código con personalizaciones gráficas, tablas y contenido para crear el PDF. |
 | `Solucion.pdf` | Documento final con el código base de la sesión y sus gráficas.             |
+| `Solucion.ipynb` | Notebook de Jupyter con la solución en Python (se abre en VS Code).          |
 | `data/`        | Base de datos usada en el taller.                                              |
 
 La carpeta `Recursos/` contiene material complementario: scripts de apoyo sobre varianza, multicolinealidad, predicción, regresión logística y Poisson, y una guía de comandos de R y de Git (esta última es completamente opcional y no es necesaria para el curso, pero facilitará su interacción con el repositorio).
