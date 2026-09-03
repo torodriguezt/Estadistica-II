@@ -22,6 +22,16 @@ figs/
 # Datos procesados temporales
 Limpieza/
 
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+.vscode
+
 # Sistema
 .DS_Store
 Thumbs.db
