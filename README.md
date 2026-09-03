@@ -10,7 +10,7 @@ Es de especial interés tener en cuenta la siguiente información:
 
 **(2). Conocimientos previos:**
 
-- **Indispensable:** Estadística I, en particular pruebas de hipótesis e intervalos de confianza.
+- **Importantes:** Estadística I, en particular pruebas de hipótesis e intervalos de confianza.
 - **Deseable:** nociones básicas de álgebra lineal (vectores, matrices, producto matricial e inversa) y de programación en R o Python.
 
 **(3). Herramientas e instalación:** Se recomienda **RStudio** como IDE para R y **Visual Studio Code** para Python. Los talleres se pueden resolver en cualquiera de los dos lenguajes. Las soluciones en Python se publican como **notebooks** (`.ipynb`), que se abren desde VS Code.
