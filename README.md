@@ -19,7 +19,7 @@ Es de especial interés tener en cuenta la siguiente información:
 | ---------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
 | R + RStudio      | [CRAN](https://cran.r-project.org/) · [Posit](https://posit.co/downloads)                                 | [Video tutorial](https://www.youtube.com/watch?v=hbgzW3Cvda4) |
 | Python + VS Code | [python.org](https://www.python.org/downloads/) · [code.visualstudio.com](https://code.visualstudio.com/) | [Video tutorial](https://www.youtube.com/watch?v=zMUgJbbLLRw) |
-| Jupyter Notebook en VS Code | Extensiones **Python** y **Jupyter**| [Video tutorial](https://www.youtube.com/watch?v=JBG9RA8AZpQ) |
+| Jupyter Notebook en VS Code | Extensiones **Jupyter**| [Video tutorial](https://www.youtube.com/watch?v=JBG9RA8AZpQ) |
 
 **(4). Medios de comunicación:** [torodriguezt@unal.edu.co](mailto:torodriguezt@unal.edu.co)
 
