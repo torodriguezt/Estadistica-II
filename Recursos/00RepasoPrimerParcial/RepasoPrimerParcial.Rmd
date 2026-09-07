@@ -1,9 +1,28 @@
 ---
-title: "Repaso Primer Parcial — Estadística II"
+title: "Repaso — Primer Parcial"
+subtitle: "Estadística II · Universidad Nacional de Colombia, sede Medellín"
 output:
   pdf_document:
     latex_engine: xelatex
 ---
+
+## Alcance de este documento
+
+> **Este repaso cubre únicamente los temas evaluados en el primer parcial.**
+> No incluye regularización y selección de modelos, variables indicadoras,
+> regresión logística, regresión Poisson, árboles, métodos de ensamble ni
+> interpretabilidad (XAI): esos temas corresponden a evaluaciones posteriores
+> y su material está en las demás carpetas de `Recursos/`.
+
+Lo que sí encontrará aquí:
+
+-   **Regresión lineal simple:** estimación por mínimos cuadrados ordinarios y por máxima verosimilitud.
+-   **Regresión lineal múltiple:** enfoque matricial, estimación e interpretación de coeficientes.
+-   **Inferencia en el modelo lineal:** ANOVA, $R^2$ y $R^2_{adj}$, pruebas de significancia individual, sumas de cuadrados extra, pruebas sobre subconjuntos de coeficientes y la prueba de la hipótesis lineal general.
+-   **Predicción:** intervalos de confianza para la respuesta media, intervalos de predicción y el problema de la extrapolación.
+-   **Diagnósticos y validación:** verificación de supuestos, residuales escalados, observaciones atípicas, puntos de balanceo y observaciones influenciales.
+
+------------------------------------------------------------------------
 
 ## Motivación de estudio
 
