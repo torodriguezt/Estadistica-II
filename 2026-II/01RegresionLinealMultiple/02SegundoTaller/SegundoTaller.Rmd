@@ -1,0 +1,152 @@
+---
+output:
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico: Regresión Lineal Múltiple (2)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al segundo taller práctico del curso de **Estadística II** de la *Universidad Nacional de Colombia*, Sede Medellín, en el período 2026-02. El enfoque de este taller se centra en la comprensión del análisis de varianza (ANOVA), el coeficiente de determinación múltiple y la ejecución de pruebas de hipótesis sobre los parámetros del modelo de regresión lineal múltiple, tanto de forma individual como para subconjuntos de coeficientes a través de las sumas extra de cuadrados. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "regresión múltiple, ANOVA, pruebas de hipótesis, sumas extra de cuadrados"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{float}
+  - \usepackage{threeparttable}
+  - \usepackage{threeparttablex}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+#if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "leaps","tidyr",
+               "exams","leaps","MASS","rsm","car","magrittr",
+               "readxl", "kableExtra")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+data <- read.csv("data/imcv_modelo_limpio.csv")|>
+  dplyr::select(IMCV, Ingresos,
+                Salud, Trabajo, Capital)
+colnames(data) <- c("IMCV", "Ingresos", "Salud", "Trabajo", "Capital")
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos del modelo de regresión lineal múltiple vistos en clase, se propone afrontar este taller en dos partes: una de teoría básica y otra práctica.
+
+**La parte computacional puede resolverse indistintamente en R o en Python.** Ambos lenguajes son válidos y se publicará la solución en los dos; use el que le resulte más cómodo.
+
+## Parte teórica
+
+Dé respuesta a las preguntas formuladas a continuación con base en la teoría tratada en clase. **Provea una interpretación cuando sea necesario**.
+
+\begin{enumerate}
+  \item Considere el siguiente modelo de regresión lineal múltiple con tres variables regresoras:
+\[
+Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + \beta_{3}X_{i3} + \varepsilon_{i},
+\quad \varepsilon_{i} \overset{iid}{\sim} N(0, \sigma^{2}).
+\]
+  \begin{itemize}
+    \item (a) A partir de la identidad de suma de cuadrados $\text{SST} = \text{SSR} + \text{SSE}$, indique los grados de libertad asociados a cada componente y defina los cuadrados medios $\text{MSR}$ y $\text{MSE}$.
+    \item (b) Defina la suma de cuadrados extra $\text{SSR}(\beta_{2} \mid \beta_{0}, \beta_{1})$ en términos de las sumas de cuadrados del error de dos modelos e indique sus grados de libertad. Interprete qué mide esta cantidad.
+    \item (c) Para la hipótesis $\text{H}_{0}: \beta_{2} = \beta_{3} = 0$ vs $\text{H}_{1}: \text{algún } \beta_{j} \neq 0,\ j = 2, 3$, escriba el modelo completo y el modelo reducido, y especifique el estadístico de prueba $\text{F}_{0}$ junto con su distribución bajo $\text{H}_{0}$.
+    \item (d) Explique por qué la prueba de significancia de la regresión ($\text{H}_{0}: \beta_{1} = \beta_{2} = \beta_{3} = 0$) puede verse como un caso particular de una prueba basada en sumas de cuadrados extra. Identifique en este caso los subconjuntos $A$ y $B$ de coeficientes.
+  \end{itemize}
+  \item Determine el valor de verdad de las siguientes afirmaciones. \textbf{Justifique}.
+  \begin{itemize}
+    \item (a) La matriz $\mathbf{H} = \mathbf{X(X^{t}X)^{-1}X^{t}}$ es simétrica e idempotente, al igual que $\mathbf{(I_{n} - H)}$, y el vector de residuales puede escribirse como $\mathbf{e} = \mathbf{(I_{n} - H)}\mathbf{Y}$.
+    \item (b) Una suma de cuadrados extra mide la reducción marginal en el $\text{SSE}$ (equivalentemente, el incremento marginal en el $\text{SSR}$) cuando una o varias variables predictoras son agregadas al modelo de regresión, dado que las otras predictoras ya están en el modelo.
+    \item (c) El estadístico $\text{T}$ correspondiente al procedimiento empleado para probar la significancia marginal del $j$-ésimo parámetro es
+    \begin{center}
+    $\text{T}_{j, 0} = \displaystyle \frac{\hat{\beta}_{j}-0}{ee(\hat{\beta}_{j})} \sim t_{n-p}$,
+    \end{center}
+    con región de rechazo $\text{R}_{c}= \{|\text{T}_{j,0}| > t_{1-\alpha/2,\, n-p} \}$ y $p$-valor $P(|t_{n-p}| > |\text{T}_{j, 0}|)$.
+    \item (d) Valores grandes de $R^{2}$ implican necesariamente que la superficie de respuesta ajustada es útil para hacer predicciones; por ello se prefiere siempre $R^{2}$ sobre $R^{2}_{adj}$ como medida de bondad de ajuste.
+    \item (e) El $R^{2}_{adj}$ disminuye cuando se agregan al modelo variables predictoras que no logran reducir el $\text{SSE}$ lo suficiente como para compensar la pérdida de grados de libertad; entre dos modelos ajustados se considera mejor el de mayor $R^{2}_{adj}$ (equivalentemente, el de menor $\text{MSE}$).
+    \item (f) El estadístico $\text{F}$ empleado para probar la significancia global del modelo es
+    \begin{center}
+    $\text{F}_{0}= \displaystyle \frac{\text{SSR}/k}{\text{SSE}/(n-p)} = \frac{\text{MSR}}{\text{MSE}} \sim f_{k,\, n- p}$,
+    \end{center}
+    con región de rechazo $\text{R}_{c}= \{\text{F}_{0} > f_{1-\alpha,\, k,\, n-p} \}$ y $p$-valor $P(f_{k,\,n-p}> \text{F}_{0})$.
+    \item (g) Cuando el subconjunto $A$ consta de un único coeficiente $\beta_{j}$, la prueba basada en la suma de cuadrados extra es equivalente a la prueba $t$ para la significancia marginal de $\beta_{j}$; en particular $\text{F}_{j, 0} = \text{T}_{j, 0}^{2}$ y $P(f_{1, n-p} > \text{F}_{j, 0}) = P(|t_{n-p}| > |\text{T}_{j, 0}|)$.
+  \end{itemize}
+\end{enumerate}
+
+## Ejercicio con datos reales
+
+Considere el siguiente conjunto de datos que agrupa información sobre el índice multidimensional de calidad de vida de la ciudad de Medellín. **Se incluyen únicamente algunas variables** cuya descripción puede encontrarse **en el siguiente enlace:** https://medata.gov.co/dataset/1-002-09-000041
+
+```{r, echo=FALSE}
+table <- head(data, 5)
+
+table |>
+  knitr::kable(
+    booktabs = TRUE,
+    caption = "Información en análisis",
+    align = "c",
+    col.names = c("IMCV", "Ingresos", "Salud", "Trabajo", "Capital")
+  ) |>
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    latex_options = "HOLD_position",
+    font_size = 10
+  ) |>
+  kableExtra::column_spec(1, bold = TRUE)
+
+```
+
+Considere a *IMCV* como la variable respuesta. Las covariables consideradas en el análisis se especifican en la tabla anterior. **Dé respuesta a los siguientes planteamientos:**
+
+\begin{enumerate}
+\item Determine cuál es el modelo empleado en esta situación, junto con sus supuestos. Reporte la recta de regresión ajustada, calcule el vector de valores ajustados y los residuales del modelo, y obtenga una estimación de la varianza $\hat{\sigma}^{2}$.
+\item Construya la tabla de análisis de varianza (ANOVA) y determine la significancia de la regresión global. Verifique además que esta misma prueba puede obtenerse mediante el método de sumas de cuadrados extra tomando $A = \{\beta_{1}, \beta_{2}, \beta_{3}, \beta_{4}\}$ y $B = \{\beta_{0}\}$, y compruebe que el estadístico $\text{F}_{0}$ coincide con el de la tabla ANOVA.
+\item Determine la significancia de los parámetros individuales $\beta_{j}$ mediante la prueba $t$, junto con sus intervalos de confianza del $95\%$. Brinde una interpretación apropiada.
+\item Reporte el coeficiente de determinación múltiple $R^{2}$ y el $R^{2}_{adj}$, e interprételos. Ajuste el modelo reducido que excluye la covariable menos significativa del punto anterior y compare ambos modelos usando $R^{2}_{adj}$ y $\text{MSE}$.
+\item Mediante el método de sumas de cuadrados extra, realice una prueba de hipótesis para determinar si el subconjunto de covariables \textit{Salud} y \textit{Trabajo} aporta significativamente al modelo, dado que \textit{Ingresos} y \textit{Capital} ya se encuentran en él. Reporte la suma de cuadrados extra, sus grados de libertad y el estadístico $\text{F}_{0}$. Repita el procedimiento para un único coeficiente y verifique que el resultado coincide con la prueba $t$ correspondiente del punto 3.
+\end{enumerate}
+
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
