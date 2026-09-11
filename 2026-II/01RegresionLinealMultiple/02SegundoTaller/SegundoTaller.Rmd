@@ -84,7 +84,6 @@ Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + \beta_{3}X_{i3} + \varep
     \item (a) A partir de la identidad de suma de cuadrados $\text{SST} = \text{SSR} + \text{SSE}$, indique los grados de libertad asociados a cada componente y defina los cuadrados medios $\text{MSR}$ y $\text{MSE}$.
     \item (b) Defina la suma de cuadrados extra $\text{SSR}(\beta_{2} \mid \beta_{0}, \beta_{1})$ en términos de las sumas de cuadrados del error de dos modelos e indique sus grados de libertad. Interprete qué mide esta cantidad.
     \item (c) Para la hipótesis $\text{H}_{0}: \beta_{2} = \beta_{3} = 0$ vs $\text{H}_{1}: \text{algún } \beta_{j} \neq 0,\ j = 2, 3$, escriba el modelo completo y el modelo reducido, y especifique el estadístico de prueba $\text{F}_{0}$ junto con su distribución bajo $\text{H}_{0}$.
-    \item (d) Explique por qué la prueba de significancia de la regresión ($\text{H}_{0}: \beta_{1} = \beta_{2} = \beta_{3} = 0$) puede verse como un caso particular de una prueba basada en sumas de cuadrados extra.
   \end{itemize}
   \item Determine el valor de verdad de las siguientes afirmaciones. \textbf{Justifique}.
   \begin{itemize}
