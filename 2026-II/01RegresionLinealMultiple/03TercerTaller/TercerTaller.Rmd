@@ -65,7 +65,7 @@ data <- read.csv("data/imcv_modelo_limpio.csv")
 
 Con el propósito de profundizar en los conceptos del modelo de regresión lineal múltiple vistos en clase, se propone abordar este taller en dos partes: una de teoría básica y otra práctica.
 
-**La solución para cada uno de los problemas se efectúa a partir del software estadístico R.**
+**La parte computacional puede resolverse indistintamente en R o en Python.** Ambos lenguajes son válidos y se publicará la solución en los dos; use el que le resulte más cómodo.
 
 ## Parte teórica
 
