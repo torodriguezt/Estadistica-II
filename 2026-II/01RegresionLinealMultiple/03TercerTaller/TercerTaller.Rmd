@@ -124,7 +124,7 @@ Considere a *IMCV* como la variable respuesta. Las covariables consideradas en e
 \item Identifique puntos atípicos a través de un criterio gráfico y analítico.
 \item Realice inferencia para $\mathbf{\underline{x}}_{01} = [1,\; 1.6921,\; 3.3214,\; 0.6125,\; 6.1313]'$ y
 \\
-$\mathbf{\underline{x}}_{02} = [1,\; 3.6534,\; 4.2594,\; 0.7646,\; 12.7477]'$, con su respectivo intervalo de predicción.
+$\mathbf{\underline{x}}_{02} = [1,\; 3.6,\; 4.3,\; 0.4,\; 3.3]'$, con su respectivo intervalo de predicción.
 \textbf{Verifique primero si no se trata de un punto de extrapolación.}
 
 \end{enumerate}
