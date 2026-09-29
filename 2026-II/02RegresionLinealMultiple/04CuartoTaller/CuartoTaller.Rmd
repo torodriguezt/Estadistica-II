@@ -1,0 +1,154 @@
+---
+output:
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico: Regresión Lineal Múltiple (4)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al cuarto taller práctico del curso de **Estadística II** de la *Universidad Nacional de Colombia*, Sede Medellín, en el período 2026-02. El enfoque de este taller está en la comprensión del problema de multicolinealidad (efectos y diagnósticos), así como en los métodos de regresión penalizada Ridge y Lasso como alternativas para enfrentarlo. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "regresión múltiple, multicolinealidad, Ridge, Lasso"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{float}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "tidyr",
+               "exams", "MASS", "rsm", "car", "magrittr",
+               "readxl", "kableExtra")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+data <- read.csv("data/imcv_modelo_limpio.csv")
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos del modelo de regresión lineal múltiple vistos en clase, se propone abordar este taller en dos partes: una de teoría básica y otra práctica.
+
+**La parte computacional puede resolverse indistintamente en R o en Python.** Ambos lenguajes son válidos y se publicará la solución en los dos; use el que le resulte más cómodo.
+
+## Parte teórica
+
+Dé respuesta a las preguntas formuladas a continuación con base en la teoría tratada en clase. **Provea una interpretación de ser necesario.**
+
+\begin{enumerate}
+  \item Determine el valor de verdad de las siguientes afirmaciones.
+  \begin{itemize}
+    \item (a) Bajo el modelo de regresión lineal múltiple $Y_{i} = \beta_{0}+ \beta_{1}X_{i1}+ \beta_{2}X_{i2}+ ...+ \beta_{k}X_{ik}+ \varepsilon_{i}; \varepsilon_{i} \overset{iid}{\sim} N(0, \sigma^{2})$, la comparación de los efectos parciales de las variables debe realizarse a través del \textbf{escalamiento normal unitario de las covariables}.
+    \item (b) La multicolinealidad refiere a la dependencia lineal casi perfecta entre covariables, afectando la matriz $\mathbf{X'X}$. Esta puede descartarse si la correlación entre un par de variables $X_{i} \neq X_{j}$ es pequeña.
+    \item (c) La multicolinealidad puede causar la inflación de las varianzas de los estimadores, además de estimadores $\hat{\beta_{j}}$ muy grandes en términos absolutos y valores de los coeficientes estimados con signo contrario a lo esperado.
+    \item (d) Una forma en la que se manifiesta la multicolinealidad grave es cuando el modelo de regresión ajustado es significativo (globalmente), pero los parámetros individuales no lo son.
+  \end{itemize}
+  \item Para los literales (a) y (b), indique cuál de las opciones i. a iv. es correcta. Justifique su respuesta.
+  \begin{itemize}
+    \item[(a)] La regresión Lasso, en comparación con mínimos cuadrados, es:
+    \begin{itemize}
+      \item[i.] Más flexible y, por lo tanto, mejorará la precisión de predicción cuando su aumento en el sesgo sea menor que su disminución en la varianza.
+      \item[ii.] Más flexible y, por lo tanto, mejorará la precisión de predicción cuando su aumento en la varianza sea menor que su disminución en el sesgo.
+      \item[iii.] Menos flexible y, por lo tanto, mejorará la precisión de predicción cuando su aumento en el sesgo sea menor que su disminución en la varianza.
+      \item[iv.] Menos flexible y, por lo tanto, mejorará la precisión de predicción cuando su aumento en la varianza sea menor que su disminución en el sesgo.
+    \end{itemize}
+    \item[(b)] Repita el literal (a) para la regresión Ridge en comparación con mínimos cuadrados.
+  \end{itemize}
+  \item Suponga que se estiman los coeficientes de un modelo de regresión lineal minimizando
+$$
+\sum_{i=1}^{n}\Big(y_{i}-\beta_{0}-\sum_{j=1}^{p}\beta_{j}x_{ij}\Big)^{2}+\lambda\sum_{j=1}^{p}\beta_{j}^{2}
+$$
+  para un valor particular de $\lambda$. Para los literales (a) a (e), indique cuál de las opciones i. a v. es correcta. Justifique su respuesta.
+  \begin{itemize}
+    \item[(a)] A medida que $\lambda$ aumenta desde 0, la suma de cuadrados de los errores (SSE) en el conjunto de entrenamiento:
+    \begin{itemize}
+      \item[i.] Aumenta inicialmente y luego empieza a disminuir, en forma de U invertida.
+      \item[ii.] Disminuye inicialmente y luego empieza a aumentar, en forma de U.
+      \item[iii.] Aumenta de forma sostenida.
+      \item[iv.] Disminuye de forma sostenida.
+      \item[v.] Permanece constante.
+    \end{itemize}
+    \item[(b)] Repita el literal (a) para la SSE en el conjunto de prueba.
+    \item[(c)] Repita el literal (a) para la varianza.
+    \item[(d)] Repita el literal (a) para el sesgo (al cuadrado).
+    \item[(e)] Repita el literal (a) para el error irreducible.
+  \end{itemize}
+\end{enumerate}
+
+## Ejercicio con datos reales
+
+Considere el siguiente conjunto de datos que agrupa información sobre el índice multidimensional de calidad de vida de la ciudad de Medellín. **Se incluyen únicamente algunas variables**, cuya descripción puede encontrarse **en el siguiente enlace:** https://medata.gov.co/dataset/1-002-09-000041
+
+```{r, echo=FALSE}
+table <- head(data, 5)
+
+table |>
+  knitr::kable(
+    booktabs = TRUE,
+    caption = "Información en análisis",
+    align = "c",
+    col.names = c("IMCV", "Ingresos", "Salud", "Trabajo", "Capital")
+  ) |>
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    latex_options = "HOLD_position",
+    font_size = 10
+  ) |>
+  kableExtra::column_spec(1, bold = TRUE)
+
+```
+
+Considere a *IMCV* como la variable respuesta. Las covariables consideradas en el análisis se especifican en la tabla anterior. **Dé respuesta a los siguientes planteamientos:**
+
+\begin{enumerate}
+\item Escriba el modelo de regresión lineal múltiple, junto con sus supuestos. Deduzca a partir del modelo ajustado si podría haber problemas de multicolinealidad.
+\item Realice un análisis de multicolinealidad a través del número de condición e índice de condición.
+\item Ajuste un modelo de regresión Ridge, seleccionando $\lambda$ por validación cruzada. Presente la gráfica de las trayectorias de los coeficientes y la del error cuadrático medio de validación cruzada frente a $\log(\lambda)$. Compare los coeficientes estimados con los de mínimos cuadrados obtenidos en el punto 1.
+\item Ajuste un modelo de regresión Lasso, seleccionando $\lambda$ por validación cruzada. Reporte los coeficientes estimados y el número de coeficientes distintos de cero. ¿Qué variables quedan por fuera del modelo? ¿Es coherente este resultado con el análisis de multicolinealidad del punto 2?
+\end{enumerate}
+
+**Observación:** Para que los resultados sean reproducibles, use la misma configuración del ejemplo visto en clase: una grilla de 100 valores de $\lambda$ entre $5$ y $10^{-4}$ en escala logarítmica, validación cruzada de 3 particiones y semilla 50 (`set.seed(50)` en R o `random_state=50` en Python).
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
