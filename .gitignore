@@ -25,6 +25,10 @@ Limpieza/
 # Exámenes (enunciados, bases y respuestas; no se suben)
 Examenes/
 
+# Diapositivas del profesor y libros de referencia (no se suben)
+EstadisticaII_Semana*.pdf
+ISLR*.pdf
+
 # Python
 .venv/
 venv/
