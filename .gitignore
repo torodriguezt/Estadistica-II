@@ -22,6 +22,9 @@ figs/
 # Datos procesados temporales
 Limpieza/
 
+# Exámenes (enunciados, bases y respuestas; no se suben)
+Examenes/
+
 # Python
 .venv/
 venv/
