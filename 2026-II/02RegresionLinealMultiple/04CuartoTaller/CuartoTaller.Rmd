@@ -9,8 +9,8 @@ thanks: "El material asociado a este taller puede encontrarse en el repositorio 
 author:
 - name: Estadística II
   affiliation: Universidad Nacional de Colombia, Sede Medellín
-abstract: "Este documento corresponde al cuarto taller práctico del curso de **Estadística II** de la *Universidad Nacional de Colombia*, Sede Medellín, en el período 2026-02. El enfoque de este taller está en la comprensión del problema de multicolinealidad (efectos y diagnósticos), así como en los métodos de regresión penalizada Ridge y Lasso como alternativas para enfrentarlo. **Monitor:** *Tomás Rodríguez Taborda.*"
-keywords: "regresión múltiple, multicolinealidad, Ridge, Lasso"
+abstract: "Este documento corresponde al cuarto taller práctico del curso de **Estadística II** de la *Universidad Nacional de Colombia*, Sede Medellín, en el período 2026-02. El enfoque de este taller está en la comprensión del problema de multicolinealidad (efectos y diagnósticos), en los métodos de regresión penalizada Ridge y Lasso como alternativas para enfrentarlo, y en el método de todas las regresiones posibles para la selección de variables. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "regresión múltiple, multicolinealidad, Ridge, Lasso, selección de variables"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 geometry: margin=1in
 #fontfamily: mathpazo
@@ -24,6 +24,7 @@ header-includes:
   - \usepackage{booktabs}
   - \usepackage{array}
   - \usepackage{float}
+  - \usepackage{needspace}
 ---
 
 ```{r setup, include=FALSE}
@@ -106,6 +107,14 @@ $$
     \item[(d)] Repita el literal (a) para el sesgo (al cuadrado).
     \item[(e)] Repita el literal (a) para el error irreducible.
   \end{itemize}
+  \needspace{8\baselineskip}
+  \item Determine el valor de verdad de las siguientes afirmaciones sobre el método de todas las regresiones posibles.
+  \begin{itemize}
+    \item (a) Con $k = 4$ variables predictoras se ajustan $2^{k} - 1 = 15$ modelos con intercepto. Según el criterio $\text{R}^{2}$, el mejor de ellos es el que tiene el mayor $\text{R}^{2}$.
+    \item (b) Para el modelo que contiene las $k$ variables predictoras siempre se cumple que $C_{p} = p$, con $p = k + 1$.
+    \item (c) Escoger el submodelo con el mayor $\text{R}^{2}_{adj}$ es equivalente a escoger el submodelo con el menor $\text{MSE}_{p}$.
+    \item (d) Para calcular el $\text{PRESS}_{p}$ de un submodelo es necesario ajustar $n$ regresiones distintas, cada una sin la $i$-ésima observación, lo que hace que este criterio sea computacionalmente costoso.
+  \end{itemize}
 \end{enumerate}
 
 ## Ejercicio con datos reales
@@ -138,9 +147,10 @@ Considere a *IMCV* como la variable respuesta. Las covariables consideradas en e
 \item Realice un análisis de multicolinealidad a través del número de condición e índice de condición.
 \item Ajuste un modelo de regresión Ridge, seleccionando $\lambda$ por validación cruzada. Presente la gráfica de las trayectorias de los coeficientes y la del error cuadrático medio de validación cruzada frente a $\log(\lambda)$. Compare los coeficientes estimados con los de mínimos cuadrados obtenidos en el punto 1.
 \item Ajuste un modelo de regresión Lasso, seleccionando $\lambda$ por validación cruzada. Reporte los coeficientes estimados y el número de coeficientes distintos de cero. ¿Qué variables quedan por fuera del modelo? ¿Es coherente este resultado con el análisis de multicolinealidad del punto 2?
+\item Use el método de todas las regresiones posibles para seleccionar los mejores submodelos según los criterios $\text{R}^{2}$, $\text{R}^{2}_{adj}$ (o $\text{MSE}_{p}$), $C_{p}$ de Mallows y $\text{PRESS}_{p}$. \textbf{Seleccione el mejor modelo} y compare sus variables con las que conserva la regresión Lasso en el punto 4.
 \end{enumerate}
 
-**Observación:** Para que los resultados sean reproducibles, use la misma configuración del ejemplo visto en clase: una grilla de 100 valores de $\lambda$ entre $5$ y $10^{-4}$ en escala logarítmica, validación cruzada de 3 particiones y semilla 50 (`set.seed(50)` en R o `random_state=50` en Python).
+**Observación:** Para que los resultados sean reproducibles, use la misma configuración del ejemplo visto en clase: una grilla de 100 valores de $\lambda$ entre $5$ y $10^{-4}$ en escala logarítmica, validación cruzada de 3 particiones y semilla 50 (`set.seed(50)` en R o `random_state=50` en Python). Para el punto 5 en R puede usar las funciones `myAllRegTable`, `myR2_criterion`, `myAdj_R2_criterion` y `myCp_criterion` del archivo `functions.R` (requiere el paquete `leaps`), como en el ejemplo de clase. En Python, el archivo `functions.py` contiene funciones con los mismos nombres y la misma salida, que reciben un modelo ajustado con `statsmodels` (`from functions import myAllRegTable, myCp_criterion, ...`).
 
 ```{=html}
 <!--
