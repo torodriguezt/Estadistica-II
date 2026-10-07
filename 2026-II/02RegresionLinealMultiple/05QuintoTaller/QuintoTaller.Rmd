@@ -180,20 +180,6 @@ En los puntos siguientes se consideran los modelos candidatos:
 
 \begin{enumerate}
 \setcounter{enumi}{1}
-\item Se estimará ahora el error de prueba del modelo $M_{1}$ usando el método del conjunto de validación. \textbf{No olvide fijar una semilla antes de comenzar el análisis.}
-  \begin{itemize}
-  \item (a) Ajuste el modelo $M_{1}$ con todas las observaciones y calcule su error cuadrático medio de entrenamiento.
-  \item (b) Usando el método del conjunto de validación, estime el error de prueba de $M_{1}$. Para ello, realice los siguientes pasos:
-    \begin{itemize}
-    \item[i.] Divida la muestra en un conjunto de entrenamiento (80\%) y uno de validación (20\%).
-    \item[ii.] Ajuste el modelo usando únicamente las observaciones de entrenamiento.
-    \item[iii.] Obtenga la predicción de \textit{IMCV} para cada observación del conjunto de validación.
-    \item[iv.] Calcule el error cuadrático medio de validación, $\text{ECM}_{\text{Validación}}$.
-    \end{itemize}
-  ¿Cómo se compara con el error de entrenamiento obtenido en (a)?
-  \item (c) Repita el proceso de (b) tres veces, usando tres divisiones distintas de las observaciones en conjuntos de entrenamiento y validación. Comente los resultados obtenidos.
-  \item (d) Considere ahora los modelos $M_{2}$ y $M_{3}$, que incluyen las variables indicadoras de \textit{NivelIngresos} (y sus interacciones con \textit{Salud}). Estime su error de prueba con el método del conjunto de validación, \textbf{usando las mismas divisiones} de (b) y (c). Comente si incluir las variables indicadoras conduce a una reducción del error de prueba.
-  \end{itemize}
 \item Se realizará ahora la selección entre los cuatro modelos candidatos mediante validación cruzada.
   \begin{itemize}
   \item (a) Fije una semilla y calcule el error LOOCV y el error de validación cruzada de 10 particiones de los modelos $M_{1}$ a $M_{4}$, usando las mismas particiones para todos ellos.
@@ -203,7 +189,7 @@ En los puntos siguientes se consideran los modelos candidatos:
   \end{itemize}
 \end{enumerate}
 
-**Observación:** Para que los resultados sean reproducibles, use la misma configuración del ejemplo visto en clase: semilla 123 (`set.seed(123)` en R o `random_state=123` en Python) y las mismas particiones para todos los modelos comparados. En los puntos 2 y 3 puede usar `mc_cv` (con `times = 3` para el punto 2(c)), `loo_cv` y `vfold_cv` del paquete `tidymodels` junto con `workflow_set` y `workflow_map` en R; en Python, `ShuffleSplit` (con `n_splits=3`), `LeaveOneOut` y `KFold` de `sklearn.model_selection` con `cross_val_score`. En Python, la variable *NivelIngresos* debe codificarse con indicadoras tomando *'Bajo'* como referencia (por ejemplo, con `pd.get_dummies(..., drop_first=True)` o usando fórmulas de `statsmodels`). Considere *NivelIngresos* como una variable dada (no recalcule los terciles en cada partición).
+**Observación:** Para que los resultados sean reproducibles, use la misma configuración del ejemplo visto en clase: semilla 123 (`set.seed(123)` en R o `random_state=123` en Python) y las mismas particiones para todos los modelos comparados. En el punto 2 puede usar `loo_cv` y `vfold_cv` del paquete `tidymodels` junto con `workflow_set` y `workflow_map` en R; en Python, `LeaveOneOut` y `KFold` de `sklearn.model_selection` con `cross_val_score`. En Python, la variable *NivelIngresos* debe codificarse con indicadoras tomando *'Bajo'* como referencia (por ejemplo, con `pd.get_dummies(..., drop_first=True)` o usando fórmulas de `statsmodels`). Considere *NivelIngresos* como una variable dada (no recalcule los terciles en cada partición).
 
 ```{=html}
 <!--
