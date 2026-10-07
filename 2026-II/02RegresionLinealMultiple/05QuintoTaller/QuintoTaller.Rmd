@@ -194,20 +194,6 @@ En los puntos siguientes se consideran los modelos candidatos:
   \item (c) Repita el proceso de (b) tres veces, usando tres divisiones distintas de las observaciones en conjuntos de entrenamiento y validación. Comente los resultados obtenidos.
   \item (d) Considere ahora los modelos $M_{2}$ y $M_{3}$, que incluyen las variables indicadoras de \textit{NivelIngresos} (y sus interacciones con \textit{Salud}). Estime su error de prueba con el método del conjunto de validación, \textbf{usando las mismas divisiones} de (b) y (c). Comente si incluir las variables indicadoras conduce a una reducción del error de prueba.
   \end{itemize}
-\item En este punto se calcula el error LOOCV del modelo $M_{3}$ sin usar funciones automáticas de validación cruzada, es decir, empleando únicamente el ajuste por mínimos cuadrados, la predicción y un ciclo \texttt{for}.
-  \begin{itemize}
-  \item (a) Ajuste el modelo $M_{3}$ usando todas las observaciones.
-  \item (b) Ajuste el modelo $M_{3}$ usando todas las observaciones excepto la primera.
-  \item (c) Use el modelo de (b) para predecir \textit{IMCV} en la primera observación y calcule el residual de predicción $e_{(1)} = Y_{1} - \widehat{Y}_{(1)}$.
-  \item (d) Escriba un ciclo \texttt{for} desde $i = 1$ hasta $i = n$ que, en cada iteración:
-    \begin{itemize}
-    \item[i.] Ajuste el modelo $M_{3}$ usando todas las observaciones excepto la $i$-ésima.
-    \item[ii.] Prediga \textit{IMCV} para la $i$-ésima observación.
-    \item[iii.] Calcule el error de predicción al cuadrado $\big(Y_{i} - \widehat{Y}_{(i)}\big)^{2}$.
-    \end{itemize}
-  \item (e) Promedie los $n$ valores obtenidos en (d)iii para obtener $\text{ECM}_{\text{LOOCV}}$. Comente los resultados.
-  \item (f) Verifique que el resultado de (e) coincide con $\text{PRESS}/n$, donde $\text{PRESS} = \sum_{i=1}^{n}\big(e_{i}/(1 - h_{ii})\big)^{2}$ se calcula a partir del ajuste de (a), sin necesidad de ajustar los $n$ modelos.
-  \end{itemize}
 \item Se realizará ahora la selección entre los cuatro modelos candidatos mediante validación cruzada.
   \begin{itemize}
   \item (a) Fije una semilla y calcule el error LOOCV y el error de validación cruzada de 10 particiones de los modelos $M_{1}$ a $M_{4}$, usando las mismas particiones para todos ellos.
@@ -217,7 +203,7 @@ En los puntos siguientes se consideran los modelos candidatos:
   \end{itemize}
 \end{enumerate}
 
-**Observación:** Para que los resultados sean reproducibles, use la misma configuración del ejemplo visto en clase: semilla 123 (`set.seed(123)` en R o `random_state=123` en Python) y las mismas particiones para todos los modelos comparados. En los puntos 2 y 4 puede usar `mc_cv` (con `times = 3` para el punto 2(c)), `loo_cv` y `vfold_cv` del paquete `tidymodels` junto con `workflow_set` y `workflow_map` en R; en Python, `ShuffleSplit` (con `n_splits=3`), `LeaveOneOut` y `KFold` de `sklearn.model_selection` con `cross_val_score`. En el punto 3 el ciclo debe programarse a mano con `lm()` y `predict()` en R, o con `LinearRegression` o `statsmodels` en Python. En Python, la variable *NivelIngresos* debe codificarse con indicadoras tomando *'Bajo'* como referencia (por ejemplo, con `pd.get_dummies(..., drop_first=True)` o usando fórmulas de `statsmodels`). Considere *NivelIngresos* como una variable dada (no recalcule los terciles en cada partición).
+**Observación:** Para que los resultados sean reproducibles, use la misma configuración del ejemplo visto en clase: semilla 123 (`set.seed(123)` en R o `random_state=123` en Python) y las mismas particiones para todos los modelos comparados. En los puntos 2 y 3 puede usar `mc_cv` (con `times = 3` para el punto 2(c)), `loo_cv` y `vfold_cv` del paquete `tidymodels` junto con `workflow_set` y `workflow_map` en R; en Python, `ShuffleSplit` (con `n_splits=3`), `LeaveOneOut` y `KFold` de `sklearn.model_selection` con `cross_val_score`. En Python, la variable *NivelIngresos* debe codificarse con indicadoras tomando *'Bajo'* como referencia (por ejemplo, con `pd.get_dummies(..., drop_first=True)` o usando fórmulas de `statsmodels`). Considere *NivelIngresos* como una variable dada (no recalcule los terciles en cada partición).
 
 ```{=html}
 <!--
