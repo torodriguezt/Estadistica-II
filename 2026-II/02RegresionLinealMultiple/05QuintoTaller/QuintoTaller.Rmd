@@ -132,9 +132,13 @@ for i in range(10000):
 Considere el siguiente conjunto de datos que agrupa información sobre el índice multidimensional de calidad de vida de la ciudad de Medellín. **Se incluyen únicamente algunas variables**, cuya descripción puede encontrarse **en el siguiente enlace:** https://medata.gov.co/dataset/1-002-09-000041. La variable categórica *NivelIngresos* se obtiene al **discretizar la covariable continua *Ingresos* en tres niveles** (*'Bajo', 'Medio' y 'Alto'*) de acuerdo con sus terciles.
 
 ```{r, echo=FALSE}
-table <- head(data, 5)
+# Dos observaciones de cada nivel de NivelIngresos
+table <- data |>
+  dplyr::group_by(NivelIngresos) |>
+  dplyr::slice_head(n = 2) |>
+  dplyr::ungroup()
 
-table |>
+tabla <- table |>
   knitr::kable(
     booktabs = TRUE,
     caption = "Información en análisis",
@@ -147,6 +151,9 @@ table |>
     font_size = 10
   ) |>
   kableExtra::column_spec(1, bold = TRUE)
+# Quitar el espacio que booktabs agrega cada 5 filas
+tabla[] <- gsub("\\\\addlinespace\n?", "", tabla)
+tabla
 ```
 
 Considere a *IMCV* como la variable respuesta. Las covariables consideradas en el análisis se especifican en la tabla anterior. **Suponga que los supuestos del modelo se cumplen. Dé respuesta a los siguientes planteamientos:**
