@@ -1,0 +1,98 @@
+---
+output:
+  stevetemplates::article:
+    fig_caption: true
+biblio-style: apsr
+title: "Taller Práctico: Regresión Logística (1)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al sexto taller práctico del curso de **Estadística II** de la *Universidad Nacional de Colombia*, Sede Medellín, en el período 2026-02, y al **primer taller del tercer parcial**. Se brinda una introducción al modelo de regresión logística, su ajuste mediante máxima verosimilitud y la interpretación de sus parámetros con covariables cuantitativas, binarias y categóricas. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "regresión logística, función de enlace, máxima verosimilitud, odds ratio, interpretación de parámetros"
+date: "13 de octubre de 2026"
+geometry: margin=1in
+fontsize: 12pt
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{float}
+  - \usepackage{needspace}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+                      cache = FALSE)
+```
+
+```{r datos, include=FALSE}
+data <- read.csv("data/nacimientos_simplificado.csv",
+                 stringsAsFactors = FALSE,
+                 fileEncoding = "UTF-8")
+data$REGIMEN <- factor(data$REGIMEN,
+                      levels = c("Contributivo", "Subsidiado", "NoAsegurado"))
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos del modelo de regresión logística vistos en clase, se propone abordar este taller en dos partes: una de teoría básica y otra práctica. Se conserva el alcance del primer taller de regresión logística de 2026-I.
+
+**La parte computacional puede resolverse indistintamente en R o en Python.** Justifique sus respuestas y presente las interpretaciones en el contexto del problema.
+
+## Parte teórica
+
+Determine el valor de verdad de las siguientes afirmaciones. **Justifique cada respuesta y, cuando la afirmación sea falsa, corríjala.**
+
+\begin{enumerate}
+  \item En un modelo de regresión logística binaria, la variable respuesta satisface $Y_i \mid \mathbf{x}_i \sim \operatorname{Bernoulli}(\theta_i)$, donde $\theta_i = P(Y_i = 1 \mid \mathbf{x}_i)$ es la probabilidad del evento de interés para la observación $i$.
+  \item Los coeficientes $\boldsymbol{\beta}$ de un modelo de regresión logística se estiman mediante mínimos cuadrados ordinarios, porque la función de verosimilitud es no lineal.
+  \item Al representar una variable categórica con $c$ niveles mediante indicadoras en un modelo con intercepto, se pueden incluir $c-1$ indicadoras y tomar el nivel restante como referencia. Los coeficientes asociados comparan cada nivel con dicha referencia, manteniendo constantes las demás covariables.
+  \item En un modelo logístico sin interacciones, $\exp(\beta_j)$ representa el cambio en el logaritmo de los \textit{odds} por cada incremento unitario en la covariable $X_j$, manteniendo constantes las demás covariables.
+\end{enumerate}
+
+## Ejercicio con datos
+
+Considere la base simplificada **nacimientos\_simplificado.csv**, utilizada en el taller de 2026-I y disponible en la subcarpeta **data** de este taller. Contiene **2000 registros** y las siguientes variables para estudiar el bajo peso al nacer:
+
+\begin{itemize}
+  \item \textbf{BAJO\_PESO}: vale $1$ si el recién nacido tuvo bajo peso al nacer (menos de $2500$ g) y $0$ en caso contrario.
+  \item \textbf{EDAD\_MADRE}: edad de la madre, en años cumplidos.
+  \item \textbf{CONSULTAS}: número de consultas o controles prenatales realizados durante el embarazo.
+  \item \textbf{GEMELAR}: vale $1$ si el embarazo fue múltiple (gemelar o más) y $0$ si fue simple.
+  \item \textbf{REGIMEN}: régimen de seguridad social de la madre, con niveles \textit{Contributivo}, \textit{Subsidiado} y \textit{NoAsegurado}. Se toma \textit{Contributivo} como nivel de referencia.
+\end{itemize}
+
+```{r tabla-datos, results='asis'}
+knitr::kable(head(data, 5),
+             format = "latex",
+             booktabs = TRUE,
+             caption = "Primeras cinco observaciones de la base de datos",
+             align = "c") |>
+  kableExtra::kable_styling(full_width = FALSE,
+                           latex_options = "HOLD_position",
+                           font_size = 10)
+```
+
+Considere **BAJO\_PESO** como la variable respuesta y las otras cuatro variables como covariables. Ajuste el modelo **con intercepto y sin interacciones**, usando todas las observaciones. Para el ejercicio, suponga independencia condicional entre las respuestas y una relación lineal entre el logit de la probabilidad y las covariables codificadas.
+
+\begin{enumerate}
+  \item \textbf{Formulación y ajuste del modelo.}
+  \begin{itemize}
+    \item (a) Escriba el modelo de regresión logística e identifique sus componentes: la probabilidad $\theta_i$, la función de enlace $g(\theta_i)$ y el predictor lineal $\psi(\mathbf{x}_i) = \mathbf{x}_i^{\mathsf{T}}\boldsymbol{\beta}$. Defina explícitamente las dos variables indicadoras asociadas a \textit{REGIMEN}.
+    \item (b) ¿Por qué se emplea la función \textit{logit} como función de enlace? Escriba la expresión que permite recuperar $\theta_i$ a partir del predictor lineal.
+    \item (c) Plantee la función de verosimilitud y su logaritmo para este modelo. Explique por qué se recurre a un procedimiento numérico para estimar los parámetros. Ajuste el modelo por máxima verosimilitud y reporte la ecuación estimada.
+  \end{itemize}
+  \needspace{7\baselineskip}
+  \item \textbf{Interpretación de los parámetros.}
+  \begin{itemize}
+    \item (a) Interprete cada coeficiente estimado directamente en la escala de los log-\textit{odds}. ¿Qué representa el intercepto y qué limitación tiene su interpretación en este contexto?
+    \item (b) Calcule e interprete $\exp(\widehat{\beta}_j)$ para cada covariable como una razón de momios (\textit{odds ratio}). Distinga entre un incremento unitario en \textit{EDAD\_MADRE} o \textit{CONSULTAS}, un embarazo múltiple frente a uno simple y cada régimen frente a \textit{Contributivo}. Mantenga constantes las demás covariables en cada comparación.
+    \item (c) Explique por qué un \textit{odds ratio} no es, en general, una razón de probabilidades ni un cambio constante en la probabilidad de bajo peso al nacer.
+  \end{itemize}
+\end{enumerate}
+
+**Guía:** En R puede usar `glm()` con `family = binomial(link = "logit")`; en Python, `GLM` de `statsmodels` con familia binomial y enlace logit. Verifique que el evento modelado sea `BAJO_PESO = 1`, incluya el intercepto y establezca explícitamente **Contributivo** como referencia de **REGIMEN**.
