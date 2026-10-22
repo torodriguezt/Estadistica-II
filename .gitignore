@@ -28,6 +28,9 @@ Examenes/
 # Generadores de bases de los trabajos (parámetros verdaderos; no se suben)
 Generador/
 
+# Bases de datos de los trabajos (no se suben)
+**/Trabajo*/**/*.csv
+
 # Diapositivas del profesor y libros de referencia (no se suben)
 EstadisticaII_Semana*.pdf
 ISLR*.pdf
