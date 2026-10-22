@@ -1,0 +1,122 @@
+---
+output:
+  stevetemplates::article:
+    fig_caption: true
+biblio-style: apsr
+title: "Taller Práctico: Regresión Logística (2)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al séptimo taller práctico del curso de **Estadística II** de la *Universidad Nacional de Colombia*, Sede Medellín, en el período 2026-02, y al **segundo taller del tercer parcial**. Se estudian las pruebas de significancia global e individual del modelo de regresión logística y su evaluación como clasificador mediante la predicción, la matriz de confusión, la curva ROC, el AUC y la elección del punto de corte. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "regresión logística, deviance, prueba de Wald, clasificación, matriz de confusión, curva ROC, AUC, punto de corte"
+date: "21 de octubre de 2026"
+geometry: margin=1in
+fontsize: 12pt
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{float}
+  - \usepackage{needspace}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+                      cache = FALSE)
+```
+
+```{r datos, include=FALSE}
+data <- read.csv("data/nacimientos_simplificado.csv",
+                 stringsAsFactors = FALSE,
+                 fileEncoding = "UTF-8")
+data$REGIMEN <- factor(data$REGIMEN,
+                      levels = c("Contributivo", "Subsidiado", "NoAsegurado"))
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos del modelo de regresión logística vistos en clase, se propone abordar este taller en dos partes: una de teoría básica y otra práctica. Se conserva el alcance del segundo taller de regresión logística de 2026-I.
+
+**La parte computacional puede resolverse indistintamente en R o en Python.** Justifique sus respuestas y presente las interpretaciones en el contexto del problema.
+
+## Parte teórica
+
+Determine el valor de verdad de las siguientes afirmaciones. **Justifique cada respuesta y, cuando la afirmación sea falsa, corríjala.**
+
+\begin{enumerate}
+  \item El modelo de regresión logística $\operatorname{logit}(\theta_i) = \psi(\mathbf{x}_i)$ clasifica directamente cada observación como éxito ($Y_i = 1$) o fracaso ($Y_i = 0$).
+  \item Considere la matriz de confusión cuyas filas corresponden a la clase real y cuyas columnas a la clase predicha, de modo que $n_{jk}$ es el número de observaciones con $Y_i = j$ clasificadas como $\widehat{Y}_i = k$, con $j, k \in \{0, 1\}$. La tasa de falsos positivos se calcula como $n_{01}/(n_{00} + n_{01})$ e indica la proporción de observaciones clasificadas como positivas cuando realmente eran positivas.
+  \item La curva ROC muestra cómo cambian la sensibilidad y la especificidad a medida que varía el punto de corte $\theta^{*}$: cada punto de la curva corresponde a un valor de $\theta^{*}$ y tiene coordenadas $(1 - \text{especificidad}, \text{sensibilidad})$. De ella se deriva el AUC, que resume el desempeño del modelo sin fijar un punto de corte.
+  \item La elección del punto de corte $\theta^{*}$ modifica la matriz de confusión y las métricas que se derivan de ella, pero no cambia los coeficientes estimados ni las probabilidades estimadas $\widehat{\theta}_i$.
+  \item Un modelo con un AUC igual a $0.5$ no discrimina mejor que una asignación al azar; por tanto, su tasa de clasificación correcta es necesariamente cercana al $50\,\%$.
+  \item Para probar la significancia global del modelo, $H_0: \beta_1 = \cdots = \beta_k = 0$, se usa el estadístico $\chi^2_c = D_0 - D$, donde $D_0$ y $D$ son la deviance nula y la deviance residual, y se rechaza $H_0$ si $\chi^2_c > \chi^2_{k,\alpha}$. Para la significancia individual, en cambio, se prefiere la prueba \textit{t de Student}.
+\end{enumerate}
+
+## Ejercicio con datos
+
+Considere nuevamente la base **nacimientos\_simplificado.csv** del primer taller, disponible en la subcarpeta **data** de este taller. Contiene **2000 registros** y las siguientes variables:
+
+\begin{itemize}
+  \item \textbf{BAJO\_PESO}: vale $1$ si el recién nacido tuvo bajo peso al nacer (menos de $2500$ g) y $0$ en caso contrario.
+  \item \textbf{EDAD\_MADRE}: edad de la madre, en años cumplidos.
+  \item \textbf{CONSULTAS}: número de consultas o controles prenatales realizados durante el embarazo.
+  \item \textbf{GEMELAR}: vale $1$ si el embarazo fue múltiple (gemelar o más) y $0$ si fue simple.
+  \item \textbf{REGIMEN}: régimen de seguridad social de la madre, con niveles \textit{Contributivo}, \textit{Subsidiado} y \textit{NoAsegurado}. Se toma \textit{Contributivo} como nivel de referencia.
+\end{itemize}
+
+```{r tabla-datos, results='asis'}
+knitr::kable(head(data, 5),
+             format = "latex",
+             booktabs = TRUE,
+             caption = "Primeras cinco observaciones de la base de datos",
+             align = "c") |>
+  kableExtra::kable_styling(full_width = FALSE,
+                           latex_options = "HOLD_position",
+                           font_size = 10)
+```
+
+Para evaluar el modelo como clasificador, divida la base en un conjunto de **entrenamiento**, formado por las **primeras 1400 observaciones** (70 %), y uno de **prueba**, formado por las **600 restantes** (30 %). Los registros no están ordenados por ninguna variable, de modo que esta partición fija cumple el papel de una partición aleatoria y permite obtener los mismos resultados en R y en Python.
+
+Considere **BAJO\_PESO** como la variable respuesta y retome el modelo del primer taller: **con intercepto, sin interacciones** y con las otras cuatro variables como covariables. Ajústelo **solo con el conjunto de entrenamiento** y use el conjunto de prueba únicamente para evaluar su desempeño. En todo el taller, una observación se clasifica como bajo peso ($\widehat{Y}_i = 1$) si $\widehat{\theta}_i \geq \theta^{*}$, y como peso normal ($\widehat{Y}_i = 0$) en caso contrario. Use un nivel de significancia $\alpha = 0.05$.
+
+\begin{enumerate}
+  \item \textbf{Pruebas de significancia.}
+  \begin{itemize}
+    \item (a) Realice la prueba de significancia global del modelo. Plantee las hipótesis, calcule el estadístico a partir de las deviances, indique sus grados de libertad y concluya.
+    \item (b) Realice la prueba de significancia individual de cada coeficiente. Reporte el estadístico $Z_c$, su valor $p$ y la decisión. Construya intervalos de confianza del 95 \% para cada $\beta_j$ y para cada \textit{odds ratio} $\exp(\beta_j)$. ¿Qué relación hay entre la decisión de la prueba y que el intervalo para $\exp(\beta_j)$ contenga el $1$?
+    \item (c) Interprete, de forma directa y en términos de la razón de momios (\textit{odds ratio}), los coeficientes de las covariables significativas. ¿Qué se puede concluir sobre las que no lo son?
+  \end{itemize}
+  \needspace{7\baselineskip}
+  \item \textbf{Predicción y clasificación.}
+  \begin{itemize}
+    \item (a) Considere una madre de 30 años, con 4 consultas prenatales, embarazo simple y régimen Subsidiado. Calcule a mano la probabilidad estimada $\widehat{\theta}$ de bajo peso al nacer a partir de la ecuación ajustada y verifíquela con la función de predicción del software.
+    \item (b) Calcule $\widehat{\theta}_i$ para las 600 observaciones del conjunto de prueba y construya el clasificador con $\theta^{*} = 0.5$. ¿Cuántos recién nacidos clasifica como de bajo peso y cuántos tienen realmente bajo peso? ¿Cómo se clasifica la madre del literal (a)?
+  \end{itemize}
+  \needspace{5\baselineskip}
+  \item \textbf{Curva ROC y AUC.}
+  \begin{itemize}
+    \item (a) Construya la curva ROC con las probabilidades estimadas del conjunto de prueba y calcule el AUC.
+    \item (b) Interprete el AUC en términos de pares de recién nacidos, uno con bajo peso y otro sin él. ¿Qué indica sobre la capacidad de discriminación del modelo?
+  \end{itemize}
+  \needspace{7\baselineskip}
+  \item \textbf{Punto de corte óptimo.} Se busca mantener una tasa de clasificación correcta alta sin dejar sin detectar muchos casos de bajo peso (falsos negativos).
+  \begin{itemize}
+    \item (a) Con las probabilidades estimadas del conjunto de \textbf{entrenamiento}, halle el punto de corte $\theta^{*}$ que minimiza
+    $$d(\theta^{*}) = \left[1 - \text{Se}(\theta^{*})\right]^2 + \left[1 - \text{Es}(\theta^{*})\right]^2,$$
+    donde Se y Es son la sensibilidad y la especificidad. Este criterio elige el punto de la curva ROC más cercano a la esquina superior izquierda. Use como candidatos los valores distintos de $\widehat{\theta}_i$ en el entrenamiento.
+    \item (b) ¿Por qué el punto de corte se elige con el conjunto de entrenamiento y no con el de prueba? ¿Por qué el valor obtenido es mucho menor que $0.5$?
+  \end{itemize}
+  \needspace{7\baselineskip}
+  \item \textbf{Matriz de confusión.}
+  \begin{itemize}
+    \item (a) En el conjunto de prueba, reporte la matriz de confusión, la sensibilidad, la especificidad y la tasa de clasificación correcta (TCC) para el $\theta^{*}$ óptimo del punto 4, $\theta^{*} = 0.25$ y $\theta^{*} = 0.5$. ¿Cómo cambian las matrices al variar $\theta^{*}$?
+    \item (b) Compare las TCC obtenidas con la de un clasificador trivial que asigna $\widehat{Y}_i = 0$ a todas las observaciones. ¿Es la TCC una medida suficiente del desempeño cuando el evento de interés es poco frecuente?
+    \item (c) ¿Qué punto de corte recomendaría si el objetivo es detectar casos de bajo peso al nacer? Justifique su respuesta en términos de falsos negativos y falsos positivos.
+  \end{itemize}
+\end{enumerate}
+
+**Guía:** En R puede usar `glm()` con `family = binomial(link = "logit")`, `predict(..., type = "response")` y las funciones `roc()` y `auc()` del paquete `pROC`; en Python, `GLM` de `statsmodels` con familia binomial y las funciones `roc_curve()`, `roc_auc_score()` y `confusion_matrix()` de `sklearn.metrics`. Verifique que el evento modelado sea `BAJO_PESO = 1` y que **Contributivo** sea la referencia de **REGIMEN**.
