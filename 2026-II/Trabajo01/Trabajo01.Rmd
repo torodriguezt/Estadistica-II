@@ -1,0 +1,138 @@
+---
+output:
+  stevetemplates::article:
+    fig_caption: true
+    md_extensions: "-fancy_lists"
+biblio-style: apsr
+title: "Trabajo Práctico Modelos de Regresión (1)"
+thanks: "El material asociado a este trabajo puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al primer trabajo práctico del curso de **Estadística II** para la *Universidad Nacional de Colombia*, Sede Medellín, en el período 2026-02. Se aplican técnicas de regresión lineal múltiple, regresión penalizada (Ridge y Lasso), validación cruzada, regresión logística y regresión Poisson. **Monitor:** *Tomás Rodríguez Taborda.*"
+geometry: margin=1in
+fontsize: 12pt
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{float}
+  - \usepackage{needspace}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+                      cache = FALSE)
+```
+
+# Información general
+
+Este documento corresponde al primer trabajo práctico del curso de **Estadística II** de la Universidad Nacional de Colombia, Sede Medellín, en el período 2026-02. Se aplican diferentes técnicas del análisis de regresión: regresión lineal múltiple, regresión penalizada (Ridge y Lasso), validación cruzada, regresión logística y regresión Poisson.
+
+**La parte computacional puede resolverse indistintamente en R o en Python.**
+
+## Asignación del conjunto de datos
+
+Cada equipo trabaja con **su propio conjunto de datos**. Se comparten 40 bases de datos, numeradas del 1 al 40, y cada equipo debe usar la base que corresponde a su **número de equipo** en el archivo de Excel de equipos (por ejemplo, el equipo 7 trabaja con la base `Base07.csv`). Cada base contiene tres variables respuesta, una para cada modelo del trabajo (`Rendimiento` para la regresión lineal, `Roya` para la regresión logística y `Broca` para la regresión Poisson), y las covariables `X1` a `X10` y `W`. Todas se describen en la sección *Información del problema* y en cada punto.
+
+> **Importante:** trabaje únicamente con la base asignada a su equipo. Cada equipo recibe una base con características particulares, por lo que **no comparta ni reutilice** la base de otro equipo.
+
+## Sobre el conjunto de datos
+
+Antes de iniciar el análisis, construya:
+
+- Una división aleatoria de la base en un conjunto de **entrenamiento** (70% de los lotes) y uno de **prueba** (30%).
+- Una asignación aleatoria de los lotes del conjunto de entrenamiento a **10 pliegues** de tamaño similar, para la validación cruzada de 10 particiones.
+
+Fije una semilla para que sus resultados sean reproducibles y reporte el número de lotes de cada conjunto. Use los mismos pliegues en todos los procedimientos de validación cruzada del Punto 1.
+
+## Información del problema
+
+Una cooperativa de caficultores del Suroeste antioqueño desea evaluar el desempeño de los lotes de café de sus asociados, con la intención de predecir su rendimiento, la probabilidad de que presenten un brote de roya y el número de focos de broca, y de analizar cómo dependen estos resultados de las condiciones agroclimáticas y de manejo de cada lote. La roya es una enfermedad del café causada por un hongo que ataca las hojas, y la broca es un insecto que perfora los granos; ambas son los principales problemas sanitarios del cultivo en Colombia. Para la primera situación, el rendimiento del lote (que denotaremos $Y_i$; columna `Rendimiento`), medido en kilogramos de café pergamino seco por hectárea durante el último año, un agrónomo desarrolla un modelo estadístico que le permita realizar la predicción en función de:
+
+- $X_1$: Altitud del lote (en metros sobre el nivel del mar).
+- $X_2$: Temperatura media anual del lote (en $^{\circ}$C).
+- $X_3$: Precipitación acumulada anual (en mm).
+- $X_4$: Humedad relativa media (en %).
+- $X_5$: Densidad de siembra (en miles de plantas por hectárea).
+- $X_6$: Edad del cafetal desde la siembra o la última renovación (en años).
+- $X_7$: Fertilización nitrogenada (en kg de nitrógeno por hectárea al año).
+- $X_8$: Cobertura de sombrío del lote (en %).
+- $X_9$: Pendiente del terreno (en %).
+- $X_{10}$: Distancia del lote a la cabecera municipal (en km).
+- $W$: Variedad sembrada en el lote (*Castillo*, variedad resistente a la roya de amplio uso en la región; *Caturra*, variedad tradicional susceptible a la roya; *Típica*, variedad tradicional de porte alto, también susceptible a la roya). En la base, sus niveles se registran como `Castillo`, `Caturra` y `Tipica`.
+
+Así, el modelo propuesto por el agrónomo, que en adelante se denomina **modelo completo**, es
+
+$$
+Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + \cdots + \beta_{10}X_{i,10} + \beta_{11}\text{Cat}_{i} + \beta_{12}\text{Tip}_{i} + \varepsilon_{i}; \quad \varepsilon_{i} \overset{iid}{\sim} N(0, \sigma^{2}),
+$$
+
+donde $\text{Cat}_{i}$ y $\text{Tip}_{i}$ son las variables indicadoras de las variedades *Caturra* y *Típica*, respectivamente (categoría de referencia: *Castillo*).
+
+# Punto 1. Modelo de regresión lineal múltiple, Ridge y Lasso
+
+En función de la información proporcionada, se desea evaluar el modelo completo propuesto por el agrónomo y compararlo con alternativas de regresión penalizada. Con esta finalidad, asumiendo que los supuestos del modelo se cumplen y empleando el conjunto de entrenamiento:
+
+- (a) Ajuste el modelo completo por mínimos cuadrados ordinarios (MCO). Reporte la tabla de coeficientes estimados (estimación, error estándar, estadístico $T$ y $p$-valor) y la ecuación ajustada. Interprete, en términos del problema, las estimaciones de $\beta_{7}$ (fertilización) y de $\beta_{11}$ (variedad *Caturra*).
+
+- (b) Realice la prueba de significancia global del modelo a partir de la tabla ANOVA y la prueba de significancia individual de los parámetros. Reporte las hipótesis, los estadísticos de prueba y el criterio de decisión, así como el $R^{2}_{adj}$. ¿Qué covariables resultan no significativas? ¿Es coherente este resultado con el de la prueba global?
+
+- (c) Realice un análisis de multicolinealidad del modelo completo a través del factor de inflación de varianza (VIF), el número de condición y los índices de condición. Identifique las covariables involucradas y explique por qué, en el contexto del problema, es esperable la relación entre ellas. ¿Qué consecuencias tiene la multicolinealidad sobre las estimaciones y las pruebas de los literales (a) y (b)?
+
+- (d) Ajuste los modelos de regresión Ridge y Lasso con las mismas covariables del modelo completo, representando $W$ con las mismas dos indicadoras. Escriba la función que minimiza cada estimador. Seleccione $\lambda$ por validación cruzada de 10 particiones, con los pliegues construidos en la sección *Sobre el conjunto de datos* y una grilla de 100 valores de $\lambda$ entre $10^{4}$ y $10^{-2}$ en escala logarítmica. Para cada método, presente la gráfica de las trayectorias de los coeficientes y la del error cuadrático medio (ECM) de validación cruzada frente a $\log(\lambda)$, y reporte el valor $\lambda_{\min}$ que minimiza dicho error.
+
+- (e) Presente en una sola tabla los coeficientes estimados por MCO, Ridge y Lasso (estos dos últimos con el valor de $\lambda$ seleccionado en el literal (d)), en la escala original de las covariables. ¿Qué ocurre con los coeficientes de las covariables involucradas en la multicolinealidad bajo cada método? ¿Qué covariables quedan por fuera del modelo Lasso? ¿Por qué Lasso puede estimar coeficientes exactamente iguales a cero, mientras que Ridge no?
+
+- (f) Considere los siguientes modelos candidatos, ajustados por MCO: $M_{1}$, el modelo completo; $M_{2}$, el modelo con únicamente las covariables cuyo coeficiente Lasso es distinto de cero (si Lasso conserva alguna de las indicadoras de $W$, incluya $W$ completa); y $M_{3}$, el modelo completo más el término cuadrático $X_{2}^{2}$, que permite representar un rango de temperatura óptimo para el cultivo. Calcule el ECM de validación cruzada de 10 particiones (con los mismos pliegues) y el ECM de LOOCV de los tres modelos, y seleccione el mejor. Luego, con el conjunto de prueba, compare el ECM de prueba del modelo seleccionado con los de Ridge y Lasso. ¿Qué modelo recomendaría a la cooperativa para predecir el rendimiento? Justifique su respuesta en términos del compromiso entre sesgo y varianza.
+
+- (g) Considere los lotes nuevos $\mathbf{\underline{x}}_{01} = [1,\; 1650,\; 19.4,\; 2300,\; 80,\; 6.5,\; 4,\; 200,\; 25,\; 40,\; 10,\; 1,\; 0]'$ y $\mathbf{\underline{x}}_{02} = [1,\; 1950,\; 21.0,\; 2300,\; 80,\; 6.5,\; 4,\; 200,\; 25,\; 40,\; 10,\; 1,\; 0]'$, en el orden $[1, X_{1}, \ldots, X_{10}, \text{Cat}, \text{Tip}]'$; es decir, dos lotes de variedad *Caturra* que difieren únicamente en la altitud y la temperatura. Verifique si son puntos de extrapolación. ¿Se encuentran los valores de cada lote, covariable por covariable, dentro de los rangos observados? ¿Coincide esto con la conclusión del criterio anterior? Explique con base en el literal (c). Para los lotes en los que no se extrapole, estime con el modelo completo el rendimiento medio con un intervalo de confianza del 95% y construya el intervalo de predicción del 95%; compare con las predicciones de Ridge y Lasso. Interprete.
+
+# Punto 2. Modelo de regresión logística
+
+Considere ahora la segunda situación: la presencia de un brote de roya en el lote, representada por la variable $Y_{i}$ (columna `Roya`), tal que $Y_{i} = 1$ si el lote presentó un brote de roya durante el último año y $Y_{i} = 0$ en caso contrario, con probabilidad de éxito asociada $\theta_{i}$. Con base en el conocimiento agronómico, se propone el modelo
+
+$$
+\text{logit}(\theta_{i}) = \beta_{0} + \beta_{1}X_{i2} + \beta_{2}X_{i4} + \beta_{3}X_{i7} + \beta_{4}\text{Cat}_{i} + \beta_{5}\text{Tip}_{i},
+$$
+
+es decir, en función de la temperatura, la humedad relativa, la fertilización y la variedad. Considere que la respuesta binaria no está balanceada. Ajuste el modelo con el conjunto de entrenamiento.
+
+- (a) Ajuste el modelo por máxima verosimilitud y reporte la tabla de coeficientes. Realice la prueba de significancia global del modelo a partir de las devianzas (reporte la devianza nula $D_{0}$, la devianza residual $D$, el estadístico $D_{0} - D$, sus grados de libertad y el $p$-valor) y la prueba de significancia individual de los parámetros. Obtenga intervalos de confianza de Wald del 95% para los parámetros, $\hat{\beta}_{j} \pm z_{1-\alpha/2}\, ee(\hat{\beta}_{j})$. Concluya.
+
+- (b) Provea una interpretación directa (en la escala de los log-*odds*) y una interpretación en términos del *odds ratio*, $\exp(\hat{\beta}_{j})$, de los coeficientes asociados a la temperatura ($\beta_{1}$) y a la variedad *Caturra* ($\beta_{4}$). ¿Es coherente el resultado para *Caturra* con la descripción de las variedades?
+
+- (c) Con el conjunto de prueba, obtenga las probabilidades estimadas, construya la curva ROC y reporte el AUC. Interprete. Halle un valor de corte $\theta^{*}$ que permita mantener una tasa de clasificación correcta alta, minimizando el número de falsos negativos, pues no detectar un lote con roya es más costoso para la cooperativa que una falsa alarma. Reporte el valor de $\theta^{*}$ escogido.
+
+- (d) Reporte la matriz de confusión, la tasa de clasificación correcta, la sensibilidad y la especificidad en el conjunto de prueba para $\theta^{*}$ y para $\theta = 0.5$. ¿Cómo cambian estas medidas entre ambos puntos de corte? Interprete.
+
+- (e) Estime la probabilidad de que el lote $\mathbf{\underline{x}}_{01}$ del Punto 1(g) presente un brote de roya y asígnele la etiqueta correspondiente con el punto de corte $\theta^{*}$.
+
+# Punto 3. Modelo de regresión Poisson
+
+Finalmente, considere el número de focos de broca identificados en el lote durante la última inspección técnica (columna `Broca`), que denotaremos $Y_{i}$. Se propone el modelo de regresión Poisson
+
+$$
+Y_{i} \sim \text{Poisson}(\lambda_{i}), \qquad \log(\lambda_{i}) = \beta_{0} + \beta_{1}X_{i2} + \beta_{2}X_{i3} + \beta_{3}X_{i6},
+$$
+
+en función de la temperatura, la precipitación y la edad del cafetal. Tenga en cuenta que $\lambda_{i}$, el número esperado de focos, es distinto del parámetro de penalización $\lambda$ del Punto 1. Ajuste el modelo con el conjunto de entrenamiento.
+
+- (a) Ajuste el modelo por máxima verosimilitud y reporte la ecuación ajustada. ¿Por qué es adecuado un modelo de regresión Poisson para este tipo de problemas?
+
+- (b) Realice la prueba de significancia global del modelo a partir de las devianzas y la prueba de significancia individual de los parámetros. Reporte las hipótesis, los estadísticos de prueba y el criterio de decisión. Concluya.
+
+- (c) Interprete $\exp(\hat{\beta}_{j})$ en términos del problema para las covariables significativas. Estime el número esperado de focos de broca, $\hat{\lambda}_{0}$, para el lote $\mathbf{\underline{x}}_{01}$ del Punto 1(g).
+
+**Aclaración:** todos los modelos se ajustan con el conjunto de entrenamiento. El conjunto de prueba se emplea únicamente en los literales 1(f), 2(c) y 2(d).
+
+# Instrucciones de envío
+
+1. La fecha límite de envío es el **5 de noviembre de 2026**. Entregar en formato PDF, nombrando el archivo con el **primer apellido completo** de cada integrante del equipo (por ejemplo, para los integrantes *Rodríguez*, *Gómez* y *Torres*, el archivo se llamaría `Rodriguez_Gomez_Torres.pdf`).
+2. Junto con el PDF, enviar el **script** (R o Python) con el que se reproducen todos los resultados del trabajo, incluida la construcción de la partición en entrenamiento y prueba y de los pliegues de validación cruzada.
+3. Se puede emplear 'Overleaf', 'R Markdown' o 'Quarto' para la creación del trabajo, los cuales facilitan la creación de reportes en \LaTeX. También se puede usar 'Jupyter Notebook' (exportado a PDF) o 'Word'.
+4. Reportar las tablas de las salidas correspondientes (coeficientes, ANOVA, multicolinealidad, errores de validación cruzada y de prueba, matrices de confusión), con sus valores exactos, y las gráficas solicitadas (trayectorias de los coeficientes, curvas de validación cruzada y curva ROC) con sus ejes identificados. Realizar análisis breves y claros.
+5. La inclusión de índice de contenidos, índice de tablas e índice de figuras es optativa, al igual que la portada. Sin embargo, es **obligatorio** reportar, ya sea en la portada o al inicio del documento, el **número de equipo**, los **nombres de los integrantes** y el **grupo del curso en el SIA (1 o 2)** al que pertenece cada integrante. Identifique de forma clara y separada la respuesta a cada literal.
+6. Cada equipo debe trabajar con la base correspondiente a su número de equipo, siguiendo las indicaciones de la sección *Asignación del conjunto de datos*.
