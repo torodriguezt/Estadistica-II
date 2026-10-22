@@ -84,39 +84,11 @@ Para evaluar el modelo como clasificador, divida la base en un conjunto de **ent
 Considere **BAJO\_PESO** como la variable respuesta y retome el modelo del primer taller: **con intercepto, sin interacciones** y con las otras cuatro variables como covariables. Ajústelo **solo con el conjunto de entrenamiento** y use el conjunto de prueba únicamente para evaluar su desempeño. En todo el taller, una observación se clasifica como bajo peso ($\widehat{Y}_i = 1$) si $\widehat{\theta}_i \geq \theta^{*}$, y como peso normal ($\widehat{Y}_i = 0$) en caso contrario. Use un nivel de significancia $\alpha = 0.05$.
 
 \begin{enumerate}
-  \item \textbf{Pruebas de significancia.}
-  \begin{itemize}
-    \item (a) Realice la prueba de significancia global del modelo. Plantee las hipótesis, calcule el estadístico a partir de las deviances, indique sus grados de libertad y concluya.
-    \item (b) Realice la prueba de significancia individual de cada coeficiente. Reporte el estadístico $Z_c$, su valor $p$ y la decisión. Construya intervalos de confianza del 95 \% para cada $\beta_j$ y para cada \textit{odds ratio} $\exp(\beta_j)$. ¿Qué relación hay entre la decisión de la prueba y que el intervalo para $\exp(\beta_j)$ contenga el $1$?
-    \item (c) Interprete, de forma directa y en términos de la razón de momios (\textit{odds ratio}), los coeficientes de las covariables significativas. ¿Qué se puede concluir sobre las que no lo son?
-  \end{itemize}
-  \needspace{7\baselineskip}
-  \item \textbf{Predicción y clasificación.}
-  \begin{itemize}
-    \item (a) Considere una madre de 30 años, con 4 consultas prenatales, embarazo simple y régimen Subsidiado. Calcule a mano la probabilidad estimada $\widehat{\theta}$ de bajo peso al nacer a partir de la ecuación ajustada y verifíquela con la función de predicción del software.
-    \item (b) Calcule $\widehat{\theta}_i$ para las 600 observaciones del conjunto de prueba y construya el clasificador con $\theta^{*} = 0.5$. ¿Cuántos recién nacidos clasifica como de bajo peso y cuántos tienen realmente bajo peso? ¿Cómo se clasifica la madre del literal (a)?
-  \end{itemize}
-  \needspace{5\baselineskip}
-  \item \textbf{Curva ROC y AUC.}
-  \begin{itemize}
-    \item (a) Construya la curva ROC con las probabilidades estimadas del conjunto de prueba y calcule el AUC.
-    \item (b) Interprete el AUC en términos de pares de recién nacidos, uno con bajo peso y otro sin él. ¿Qué indica sobre la capacidad de discriminación del modelo?
-  \end{itemize}
-  \needspace{7\baselineskip}
-  \item \textbf{Punto de corte óptimo.} Se busca mantener una tasa de clasificación correcta alta sin dejar sin detectar muchos casos de bajo peso (falsos negativos).
-  \begin{itemize}
-    \item (a) Con las probabilidades estimadas del conjunto de \textbf{entrenamiento}, halle el punto de corte $\theta^{*}$ que minimiza
-    $$d(\theta^{*}) = \left[1 - \text{Se}(\theta^{*})\right]^2 + \left[1 - \text{Es}(\theta^{*})\right]^2,$$
-    donde Se y Es son la sensibilidad y la especificidad. Este criterio elige el punto de la curva ROC más cercano a la esquina superior izquierda. Use como candidatos los valores distintos de $\widehat{\theta}_i$ en el entrenamiento.
-    \item (b) ¿Por qué el punto de corte se elige con el conjunto de entrenamiento y no con el de prueba? ¿Por qué el valor obtenido es mucho menor que $0.5$?
-  \end{itemize}
-  \needspace{7\baselineskip}
-  \item \textbf{Matriz de confusión.}
-  \begin{itemize}
-    \item (a) En el conjunto de prueba, reporte la matriz de confusión, la sensibilidad, la especificidad y la tasa de clasificación correcta (TCC) para el $\theta^{*}$ óptimo del punto 4, $\theta^{*} = 0.25$ y $\theta^{*} = 0.5$. ¿Cómo cambian las matrices al variar $\theta^{*}$?
-    \item (b) Compare las TCC obtenidas con la de un clasificador trivial que asigna $\widehat{Y}_i = 0$ a todas las observaciones. ¿Es la TCC una medida suficiente del desempeño cuando el evento de interés es poco frecuente?
-    \item (c) ¿Qué punto de corte recomendaría si el objetivo es detectar casos de bajo peso al nacer? Justifique su respuesta en términos de falsos negativos y falsos positivos.
-  \end{itemize}
+  \item Realice una prueba de significancia de los parámetros individuales. Provea una \textit{interpretación directa} de los parámetros del modelo de regresión logística, así como una \textit{interpretación en términos de la razón de probabilidades}.
+  \item Realice una predicción de futuras observaciones. Utilice las probabilidades obtenidas para la construcción de un clasificador logístico con etiquetas.
+  \item Analice el rendimiento del modelo a través de la curva ROC y el AUC. Interprete.
+  \item Halle un valor de corte $\theta^{*}$ óptimo que permita mantener una \textbf{tasa de clasificación acertada alta}, minimizando el número de falsos negativos.
+  \item Reporte la matriz de confusión y la tasa de clasificación correcta. ¿Cómo cambian estas matrices con diferentes valores de $\theta^{*}$?
 \end{enumerate}
 
 **Guía:** En R puede usar `glm()` con `family = binomial(link = "logit")`, `predict(..., type = "response")` y las funciones `roc()` y `auc()` del paquete `pROC`; en Python, `GLM` de `statsmodels` con familia binomial y las funciones `roc_curve()`, `roc_auc_score()` y `confusion_matrix()` de `sklearn.metrics`. Verifique que el evento modelado sea `BAJO_PESO = 1` y que **Contributivo** sea la referencia de **REGIMEN**.
