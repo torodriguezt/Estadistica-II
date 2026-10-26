@@ -1,0 +1,209 @@
+---
+output:
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico: Bosques Aleatorios, Boosting e Interpretación Global de Modelos de Caja Negra"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al taller práctico sobre bosques aleatorios, *boosting* y métodos globales de interpretación del curso de **Estadística II** de la *Universidad Nacional de Colombia*, Sede Medellín, en el período 2026-02. Se estudian las dos formas de mejorar el promedio de árboles (decorrelacionarlos y construirlos de manera secuencial) y la manera de describir un modelo de caja negra mediante la importancia de las variables, la dependencia parcial, las curvas ICE y los modelos sustitutos. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "bosques aleatorios, boosting, importancia por permutación, dependencia parcial, curvas ICE, modelo sustituto"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{float}
+  - \usepackage{threeparttable}
+  - \usepackage{threeparttablex}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+#if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "ISLR2",
+               "magrittr", "kableExtra")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+data("Boston", package = "ISLR2")
+data("Hitters", package = "ISLR2")
+data("Bikeshare", package = "ISLR2")
+
+boston <- Boston |>
+  dplyr::select(medv, lstat, rm, crim, ptratio, dis)
+
+hitters <- Hitters |>
+  tidyr::drop_na(Salary) |>
+  dplyr::select(Salary, CRuns, CRBI, CHits, Years, Walks, PutOuts) |>
+  tibble::remove_rownames()
+
+bike <- Bikeshare |>
+  dplyr::mutate(hr = as.numeric(as.character(hr))) |>
+  dplyr::select(bikers, hr, workingday, temp, atemp, hum, windspeed)
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos de bosques aleatorios, *boosting* y métodos globales de interpretación vistos en clase, se propone afrontar este taller en dos partes: una de teoría básica y otra práctica.
+
+**La parte computacional puede resolverse indistintamente en R o en Python.**
+
+## Parte teórica
+
+Dé respuesta a las preguntas formuladas a continuación con base en la teoría tratada en clase. **Provea una interpretación cuando sea necesario**.
+
+\begin{enumerate}
+  \item Sean $Z_{1}, \ldots, Z_{B}$ variables aleatorias con $Var(Z_{b}) = \sigma^{2}$ y $Corr(Z_{b}, Z_{b'}) = \rho$ para todo $b \neq b'$.
+  \begin{itemize}
+    \item (a) Demuestre que $Var\left(\bar{Z}\right) = \rho\,\sigma^{2} + \frac{1 - \rho}{B}\,\sigma^{2}$.
+    \item (b) Obtenga el límite cuando $B \to \infty$. Explique por qué aumentar el número de árboles en \textit{bagging} no reduce la varianza indefinidamente y cuál de los dos términos ataca un bosque aleatorio.
+  \end{itemize}
+
+  \item Un bosque aleatorio elige al azar $m$ de las $p$ predictoras cada vez que se considera una partición.
+  \begin{itemize}
+    \item (a) Si existe una predictora mucho más fuerte que las demás, obtenga la proporción esperada de particiones en las que esa predictora \textbf{no es candidata}, y evalúela para $p = 8$ y $m = 3$.
+    \item (b) Explique por qué lo anterior \textbf{decorrelaciona} los árboles. ¿Qué procedimiento se obtiene cuando $m = p$?
+  \end{itemize}
+
+  \item Considere el algoritmo de \textit{boosting} para árboles de regresión, con $B$ árboles, parámetro de contracción $\lambda$ y $d$ particiones por árbol.
+  \begin{itemize}
+    \item (a) Explique por qué se dice que el procedimiento \textbf{aprende despacio} y en qué se diferencia de \textit{bagging}.
+    \item (b) Discuta la relación entre $\lambda$ y $B$, y por qué $B$ debe elegirse con cuidado en \textit{boosting} pero no en \textit{bagging}.
+  \end{itemize}
+
+  \item Determine el valor de verdad de las siguientes afirmaciones. \textbf{Justifique en todos los casos.}
+  \begin{itemize}
+    \item (a) En un bosque aleatorio, las $m$ predictoras candidatas se eligen una sola vez por árbol y se mantienen en todas sus particiones.
+    \item (b) Si la importancia por permutación de $X_{j}$ es cercana a cero, la respuesta $Y$ no depende de $X_{j}$ en la población.
+    \item (c) Si las curvas ICE de $X_{j}$ son paralelas, el modelo no tiene interacciones entre $X_{j}$ y las demás predictoras.
+    \item (d) La importancia por reducción de impureza, calculada en el entrenamiento, tiende a favorecer a las predictoras con muchos puntos de corte posibles, aunque no se relacionen con $Y$.
+  \end{itemize}
+\end{enumerate}
+
+## Ejercicio con datos reales: bosques aleatorios y boosting
+
+Considere el conjunto de datos `Boston`, con información de $506$ sectores censales del área de Boston. La respuesta es *medv*, el valor mediano de las viviendas en miles de dólares.
+
+```{r, echo=FALSE}
+head(boston, 5) |>
+  knitr::kable(
+    booktabs = TRUE,
+    caption = "Información en análisis: Boston",
+    align = "c",
+    col.names = c("medv", "lstat", "rm", "crim", "ptratio", "dis")
+  ) |>
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    latex_options = "HOLD_position",
+    font_size = 10
+  ) |>
+  kableExtra::column_spec(1, bold = TRUE)
+
+```
+
+\begin{enumerate}
+\item Divida el conjunto en entrenamiento y prueba, \textbf{fijando la semilla}. Ajuste bosques aleatorios con $m \in \{1, 2, 3, 4, 5\}$ y $B$ entre $1$ y $500$, y grafique el MSE de prueba en función de $B$, con una curva por cada $m$. \textbf{Describa los resultados} e indique qué curva corresponde a \textit{bagging}.
+\item Para el mejor modelo, compare el error \textit{out-of-bag} con el MSE de prueba y obtenga la importancia de las variables. \textbf{Interprete.}
+\end{enumerate}
+
+Considere ahora el conjunto de datos `Hitters`, con estadísticas de jugadores de béisbol y su salario.
+
+```{r, echo=FALSE}
+head(hitters, 5) |>
+  knitr::kable(
+    booktabs = TRUE,
+    caption = "Información en análisis: Hitters",
+    align = "c",
+    col.names = c("Salary", "CRuns", "CRBI", "CHits", "Years", "Walks", "PutOuts")
+  ) |>
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    latex_options = "HOLD_position",
+    font_size = 10
+  ) |>
+  kableExtra::column_spec(1, bold = TRUE)
+
+```
+
+\begin{enumerate}
+\setcounter{enumi}{2}
+\item Elimine los salarios desconocidos, use $\log(\textit{Salary})$ como respuesta (\textbf{justifique}) y tome las primeras $200$ observaciones como entrenamiento y las restantes como prueba.
+\item Ajuste \textit{boosting} con $B = 1000$ árboles para una rejilla de valores de $\lambda$. Grafique el MSE de entrenamiento y el de prueba en función de $\lambda$. Elija $\lambda$ y \textbf{explique} por qué las dos curvas no llevan a la misma conclusión.
+\item Con el $\lambda$ elegido, compare los errores de prueba con $d = 1$ y $d = 4$ y con los de una regresión lineal múltiple y un bosque aleatorio. \textbf{Discuta} cuál procedimiento preferiría.
+\end{enumerate}
+
+## Ejercicio con datos reales: interpretación global
+
+Considere el conjunto de datos `Bikeshare`, que registra el número de usuarios por hora de un sistema de bicicletas compartidas de Washington D. C. en $2011$ ($8645$ registros). Está disponible en `ISLR2` (R) y en `ISLP` (Python).
+
+```{r, echo=FALSE}
+head(bike, 5) |>
+  knitr::kable(
+    booktabs = TRUE,
+    format = "latex",
+    longtable = FALSE,
+    caption = "Información en análisis: Bikeshare",
+    align = "c",
+    col.names = c("bikers", "hr", "workingday", "temp", "atemp", "hum", "windspeed")
+  ) |>
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    latex_options = "HOLD_position",
+    font_size = 10
+  ) |>
+  kableExtra::column_spec(1, bold = TRUE)
+
+```
+
+La respuesta es *bikers* (usuarios en la hora); *hr* es la hora del día, que debe tratarse como **numérica**, y *temp* y *atemp* son la temperatura y la sensación térmica normalizadas.
+
+\begin{enumerate}
+\item Divida el conjunto en entrenamiento ($70\%$) y prueba ($30\%$), \textbf{fijando la semilla}. Ajuste un bosque aleatorio con $B = 500$ árboles y compare su MSE de prueba con el de una regresión lineal múltiple.
+\item Agregue dos variables de ruido, \textit{ruido\_bin} $\sim$ Bernoulli$(0.5)$ y \textit{ruido\_cont} $\sim N(0, 1)$, reajuste el bosque y obtenga la importancia por reducción de impureza y por permutación (en prueba). \textbf{Compare} la importancia de cada variable de ruido según los dos criterios.
+\item Reajuste el bosque \textbf{sin} \textit{atemp} y compare la importancia por permutación de \textit{temp}. Relacione el resultado con la correlación entre ambas.
+\item Grafique la dependencia parcial de \textit{temp} y de \textit{hr}, y las curvas ICE de \textit{hr} para $300$ observaciones, \textbf{centradas} y coloreadas según \textit{workingday}. \textbf{Describa} la forma de los efectos y qué oculta la dependencia parcial.
+\item Ajuste un árbol de regresión de profundidad $3$ a las \textbf{predicciones} del bosque en el entrenamiento. Reporte su fidelidad en el conjunto de prueba, \textbf{interprete} dos de sus reglas y discuta si el árbol podría reemplazar al bosque.
+\end{enumerate}
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
