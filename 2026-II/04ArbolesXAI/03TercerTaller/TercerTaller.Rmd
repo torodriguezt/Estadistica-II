@@ -1,0 +1,159 @@
+---
+output:
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico: Interpretación de Modelos de Caja Negra II (Métodos Locales)"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al taller práctico sobre métodos locales de interpretación del curso de **Estadística II** de la *Universidad Nacional de Colombia*, Sede Medellín, en el período 2026-02. El enfoque de este taller se centra en explicar una predicción individual desde tres preguntas distintas: cómo responde el modelo alrededor de la observación (LIME), cuánto aporta cada predictora a la diferencia con la predicción media (valores de Shapley y SHAP) y qué tendría que cambiar para obtener otra predicción (explicaciones contrafactuales). **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "LIME, valores de Shapley, SHAP, explicaciones contrafactuales"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{float}
+  - \usepackage{threeparttable}
+  - \usepackage{threeparttablex}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+#if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "ISLR2",
+               "magrittr", "kableExtra")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+data("Default", package = "ISLR2")
+default <- Default
+```
+
+# Información general
+
+Con el propósito de profundizar en los métodos locales de interpretación vistos en clase, se propone afrontar este taller en dos partes: una de teoría básica y otra práctica.
+
+**La parte computacional puede resolverse indistintamente en R o en Python.**
+
+## Parte teórica
+
+Dé respuesta a las preguntas formuladas a continuación con base en la teoría tratada en clase. **Provea una interpretación cuando sea necesario**.
+
+\begin{enumerate}
+  \item Un modelo de riesgo de crédito estima la probabilidad de incumplimiento a partir del saldo de la tarjeta ($S$), el ingreso ($I$) y la condición de estudiante ($E$). Para un cliente $x_{0}$, la predicción promedio conociendo únicamente las predictoras de cada coalición es
+\[
+\begin{array}{cccccccc}
+\toprule
+\emptyset & \{S\} & \{I\} & \{E\} & \{S, I\} & \{S, E\} & \{I, E\} & \{S, I, E\} \\
+\midrule
+0.10 & 0.30 & 0.08 & 0.12 & 0.26 & 0.36 & 0.09 & 0.32 \\
+\bottomrule
+\end{array}
+\]
+  \textit{(adaptado de Molnar, 2022, capítulo de valores de Shapley)}.
+  \begin{itemize}
+    \item (a) Escriba los $3! = 6$ órdenes de revelación con la contribución de cada predictora, y obtenga $\phi_{S}$, $\phi_{I}$ y $\phi_{E}$ como el promedio de los seis órdenes.
+    \item (b) Verifique la propiedad de \textbf{eficiencia} e interprete el signo de $\phi_{I}$ para este cliente.
+    \item (c) Si el modelo cumpliera $v(\mathcal{C} \cup \{I\}) = v(\mathcal{C})$ para toda coalición $\mathcal{C}$ sin $I$, ¿cuánto valdría $\phi_{I}$? ¿Qué propiedad lo garantiza?
+  \end{itemize}
+
+  \item Considere un modelo lineal $\widehat{f}(x) = \beta_{0} + \sum_{j=1}^{p}\beta_{j}x_{j}$ y la función de valor vista en clase, $v(\mathcal{C}) = \frac{1}{n}\sum_{i=1}^{n}\widehat{f}\left(x_{0,\mathcal{C}},\ x_{\bar{\mathcal{C}}}^{(i)}\right)$.
+  \begin{itemize}
+    \item (a) Demuestre que $\phi_{j} = \beta_{j}\left(x_{0j} - \bar{x}_{j}\right)$.
+    \item (b) Explique por qué $\phi_{j}$ puede ser cero aunque $|\beta_{j}|$ sea muy grande, y qué diferencia hay entre leer $\beta_{j}$ y leer $\phi_{j}$.
+    \item (c) En una regresión logística, el resultado de (a) se cumple en la escala del logaritmo de las chances, pero \textbf{no} en la de la probabilidad. Explique por qué.
+  \end{itemize}
+
+  \item Para el mismo modelo lineal, considere LIME con regresores estandarizados $\tilde{z}_{ij} = (z_{ij} - x_{0j})/s_{j}$ y pesos $\pi_{x_{0}}(z_{i}) > 0$.
+  \begin{itemize}
+    \item (a) Demuestre que, para cualquier ancho de núcleo, la solución de mínimos cuadrados ponderados es $\widehat{\beta}_{0} = \widehat{f}(x_{0})$ y $\widehat{\beta}_{j} = \beta_{j}\,s_{j}$.
+    \item (b) Compare esta explicación con la de SHAP del punto 2(a). ¿Por qué, aun para un modelo lineal, responden preguntas distintas?
+  \end{itemize}
+
+  \item Determine el valor de verdad de las siguientes afirmaciones. \textbf{Justifique en todos los casos.}
+  \begin{itemize}
+    \item (a) Si $\phi_{j} > 0$ para la observación $x_{0}$, aumentar $X_{j}$ aumenta la predicción del modelo en $x_{0}$.
+    \item (b) $\phi_{j}$ es la diferencia entre la predicción de $x_{0}$ con el modelo completo y la de un modelo reajustado sin $X_{j}$.
+    \item (c) Si se cambia el conjunto de referencia, cambian $\phi_{0}$ y los $\phi_{j}$, pero su suma sigue siendo igual a $\widehat{f}(x_{0})$.
+    \item (d) Como el modelo ajustado es determinista, dos ejecuciones de LIME con semillas distintas producen la misma explicación.
+    \item (e) La media de $|\phi_{j}|$ sobre un conjunto de prueba y la importancia por permutación miden lo mismo, aunque en escalas distintas.
+  \end{itemize}
+\end{enumerate}
+
+## Ejercicio con datos reales
+
+Considere el conjunto de datos `Default`, que registra para $10\,000$ clientes de una entidad financiera si incumplieron el pago de su tarjeta de crédito. Está disponible en `ISLR2` (R) y en `ISLP` (Python).
+
+```{r, echo=FALSE}
+head(default, 5) |>
+  knitr::kable(
+    booktabs = TRUE,
+    format = "latex",
+    longtable = FALSE,
+    caption = "Información en análisis: Default",
+    align = "c",
+    digits = 2,
+    col.names = c("default", "student", "balance", "income")
+  ) |>
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    latex_options = "HOLD_position",
+    font_size = 10
+  ) |>
+  kableExtra::column_spec(1, bold = TRUE)
+
+```
+
+La respuesta es *default* (si el cliente incumplió). Las covariables son *student* (codifíquela como $0/1$), *balance* (saldo promedio de la tarjeta) e *income* (ingreso anual). La predicción del modelo es la **probabilidad estimada de incumplimiento**. **Dé respuesta a los siguientes planteamientos:**
+
+\begin{enumerate}
+\item Divida el conjunto en entrenamiento ($70\%$) y prueba ($30\%$), \textbf{fijando la semilla}. Ajuste un bosque aleatorio de clasificación con $B = 500$ árboles y tamaño mínimo de nodo $20$, y compare su tasa de error de prueba con la de una regresión logística.
+\item Tome como $x_{0}$ al cliente de prueba con probabilidad estimada \textbf{más cercana a $0.5$}. \textbf{Sin usar librerías de interpretación}, obtenga $v(\mathcal{C})$ para las $8$ coaliciones, usando el entrenamiento como referencia, y calcule los valores de Shapley como en el punto 1. Verifique la eficiencia.
+\item Obtenga los valores SHAP de $x_{0}$ con una librería (\texttt{shap} en Python o \texttt{kernelshap} en R), compárelos con el punto anterior y preséntelos en un \textbf{gráfico de cascada}. \textbf{Interprete.}
+\item Implemente LIME para $x_{0}$ con $M = 3000$ perturbaciones y anchos de núcleo $0.25\sqrt{p}$, $0.75\sqrt{p}$ y $3\sqrt{p}$. Repita con $10$ semillas distintas y \textbf{comente} la estabilidad del coeficiente de \textit{balance}.
+\item Con la curva ICE de \textit{balance} para $x_{0}$, encuentre el saldo a partir del cual la probabilidad estimada baja de $0.5$. \textbf{Discuta} si este contrafactual es plausible y accionable para el cliente.
+\item Obtenga los valores SHAP para $500$ clientes de prueba y construya el gráfico de resumen y el de dependencia de \textit{balance} coloreado por \textit{student}. Compare la media de $|\phi_{j}|$ con la importancia por permutación del bosque y \textbf{explique} las diferencias.
+\end{enumerate}
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```
