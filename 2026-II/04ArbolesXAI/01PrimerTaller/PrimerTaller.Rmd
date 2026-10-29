@@ -1,0 +1,168 @@
+---
+output:
+  stevetemplates::article:
+    fig_caption: true
+#bibliography: master.bib
+biblio-style: apsr
+title: "Taller Práctico: Árboles de Regresión y Clasificación"
+thanks: "El material asociado a este taller puede encontrarse en el repositorio del curso, **(https://github.com/torodriguezt/Estadistica-II)**"
+author:
+- name: Estadística II
+  affiliation: Universidad Nacional de Colombia, Sede Medellín
+abstract: "Este documento corresponde al primer taller práctico sobre árboles e interpretabilidad del curso de **Estadística II** de la *Universidad Nacional de Colombia*, Sede Medellín, en el período 2026-02. El enfoque de este taller se centra en la construcción de un árbol por división binaria recursiva: cómo se elige cada corte reduciendo la suma de cuadrados de los residuales (RSS) o el índice de Gini, cómo se leen sus reglas para predecir una observación nueva y cómo se evalúa el árbol en datos que no participaron en su ajuste. **Monitor:** *Tomás Rodríguez Taborda.*"
+keywords: "árboles de regresión, árboles de clasificación, división binaria recursiva, índice de Gini, matriz de confusión"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+#fontfamily: mathpazo
+fontsize: 12pt
+# spacing: double
+endnote: no
+language: "es"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{float}
+  - \usepackage{threeparttable}
+  - \usepackage{threeparttablex}
+  - \setlength{\emergencystretch}{3em}
+---
+
+```{r setup, include=FALSE}
+# -----------------------------
+if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("_cache")) dir.create("_cache")
+# -----------------------------
+knitr::opts_chunk$set(cache=TRUE,
+                      message=FALSE, warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Libraries
+# -----------------------------
+#if(!require(pacman)){install.packages("pacman"); library(pacman)}
+pacman::p_load("tidyverse", "knitr", "ISLR2",
+               "magrittr", "kableExtra")
+```
+
+```{r, echo=FALSE}
+# -----------------------------
+#           Read data
+# -----------------------------
+data("Hitters", package = "ISLR2")
+
+hitters <- Hitters |>
+  tidyr::drop_na(Salary) |>
+  dplyr::select(Salary, Years, Hits) |>
+  tibble::remove_rownames()
+```
+
+# Información general
+
+Con el propósito de profundizar en los conceptos de árboles de regresión y de clasificación vistos en clase, se propone afrontar este taller en dos partes: una de teoría básica y otra práctica.
+
+**La parte computacional puede resolverse indistintamente en R o en Python.**
+
+## Parte teórica
+
+Dé respuesta a las preguntas formuladas a continuación con base en la teoría tratada en clase. **Provea una interpretación cuando sea necesario**.
+
+\begin{enumerate}
+  \item Sea $R$ una región (hoja) de un árbol de regresión con $m$ observaciones de entrenamiento $y_{1}, \ldots, y_{m}$ y media $\bar{y}_{R}$.
+  \begin{itemize}
+    \item (a) Demuestre que, para cualquier constante $c$, $\sum_{i=1}^{m}(y_{i} - c)^{2} = \sum_{i=1}^{m}(y_{i} - \bar{y}_{R})^{2} + m\,(\bar{y}_{R} - c)^{2}$, y concluya que la predicción constante que minimiza el RSS de la región es $\bar{y}_{R}$.
+    \item (b) Use el resultado anterior para demostrar que dividir una región en dos \textbf{nunca aumenta} el RSS de entrenamiento. ¿Qué implica esto a medida que aumenta la profundidad del árbol? ¿Ocurre lo mismo con el error de prueba?
+  \end{itemize}
+
+  \item Considere seis jugadores de béisbol con sus años en las Grandes Ligas ($X_{1}$), sus hits en la temporada anterior ($X_{2}$) y su salario ($Y$, en cientos de miles de dólares):
+\[
+\begin{array}{lcccccc}
+\toprule
+\text{Jugador} & A & B & C & D & E & F \\
+\midrule
+\text{Años } (X_{1}) & 5 & 11 & 2 & 8 & 1 & 4 \\
+\text{Hits } (X_{2}) & 85 & 160 & 140 & 120 & 70 & 100 \\
+\text{Salario } (Y) & 1 & 8 & 4 & 6 & 2 & 3 \\
+\bottomrule
+\end{array}
+\]
+  Se construye un árbol de regresión con \textbf{al menos dos jugadores en cada grupo}.
+  \begin{itemize}
+    \item (a) Liste los cortes admisibles de cada predictora (puntos medios entre valores consecutivos distintos) y calcule, para cada uno, el RSS de cada grupo y el RSS total. ¿Cuál es la primera división y cuánto reduce el RSS frente a predecir el salario medio para todos?
+    \item (b) Repita la búsqueda dentro de cada rama, comparando de nuevo las dos predictoras. ¿Por qué una de las ramas no puede dividirse? Dibuje el árbol final, con el número de jugadores y la predicción de cada hoja, y la partición del plano $(X_{1}, X_{2})$.
+    \item (c) Prediga el salario de un jugador con $3$ años y $150$ hits, y el de otro con $12$ años y $60$ hits. ¿Influyen los hits en la segunda predicción? ¿Puede un árbol predecir un salario mayor que el máximo del entrenamiento para un jugador con más años que todos los observados? \textbf{Explique.}
+  \end{itemize}
+
+  \item Considere un nodo de un árbol de clasificación con dos clases, \textit{Alto} y \textit{Bajo}, en el que $p$ es la proporción de la clase \textit{Alto}.
+  \begin{itemize}
+    \item (a) Muestre que el índice de Gini del nodo es $G = 1 - p^{2} - (1 - p)^{2} = 2p(1 - p)$. ¿Para qué valor de $p$ es máximo y cuándo vale cero?
+    \item (b) Un nodo con $40$ jugadores \textit{Alto} y $40$ \textit{Bajo} puede dividirse con el corte A, en los grupos $(30, 10)$ y $(10, 30)$, o con el corte B, en los grupos $(20, 40)$ y $(20, 0)$, donde cada pareja es (\textit{Alto}, \textit{Bajo}). Compare los dos cortes según la tasa de error de clasificación ponderada (prediciendo la clase mayoritaria de cada grupo) y según el Gini ponderado. ¿Por qué se prefiere el índice de Gini para construir el árbol?
+    \item (c) Un nodo $(6, 62)$ se divide en las hojas $(1, 48)$ y $(5, 14)$. Verifique que ambas hojas predicen \textit{Bajo} y que el número de errores de entrenamiento no cambia, pero el Gini ponderado sí disminuye. ¿Qué aporta entonces esta división?
+  \end{itemize}
+
+  \item Determine el valor de verdad de las siguientes afirmaciones. \textbf{Justifique en todos los casos.}
+  \begin{itemize}
+    \item (a) La división binaria recursiva encuentra el árbol con menor RSS de entrenamiento entre todos los árboles con el mismo número de hojas.
+    \item (b) Para buscar el mejor corte de una predictora basta con evaluar los puntos medios entre sus valores consecutivos distintos, pues cualquier otro punto entre ellos deja las mismas observaciones a cada lado.
+    \item (c) Si una predictora no aparece en las reglas que recorre una observación hasta su hoja, cambiar su valor no modifica la predicción de esa observación.
+    \item (d) Si el MSE de prueba de un árbol es mucho mayor que su MSE de entrenamiento, el árbol está sobreajustado.
+    \item (e) Si un árbol predice salarios mayores para los jugadores con más años, un año adicional de experiencia causa un aumento del salario.
+  \end{itemize}
+\end{enumerate}
+
+## Ejercicio con datos reales
+
+Considere el conjunto de datos `Hitters`, con el salario de 1987 y las estadísticas de desempeño de $322$ jugadores de las Grandes Ligas de béisbol. Está disponible en `ISLR2` (R) y en `ISLP` (Python). **Se incluyen únicamente algunas variables**: *Salary*, el salario anual en miles de dólares; *Years*, los años en las Grandes Ligas, y *Hits*, los hits (batazos válidos) de la temporada de 1986.
+
+```{r, echo=FALSE}
+head(hitters, 5) |>
+  knitr::kable(
+    booktabs = TRUE,
+    caption = "Información en análisis: Hitters",
+    align = "c",
+    digits = 1,
+    col.names = c("Salary", "Years", "Hits")
+  ) |>
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    latex_options = "HOLD_position",
+    font_size = 10
+  ) |>
+  kableExtra::column_spec(1, bold = TRUE)
+
+```
+
+Elimine los jugadores sin salario registrado (quedan $263$), use $Y = \log(\textit{Salary})$ como respuesta y tome las primeras $200$ filas como entrenamiento y las $63$ restantes como prueba, **sin aleatorizar**: así, como en el ejemplo de clase, R y Python usan los mismos jugadores y obtienen los mismos árboles. **Dé respuesta a los siguientes planteamientos:**
+
+\begin{enumerate}
+\item Grafique $\log(\textit{Salary})$ frente a \textit{Years} y frente a \textit{Hits} en el entrenamiento, y \textbf{explique} por qué se modela el logaritmo del salario. Obtenga la predicción que se haría sin usar las predictoras y su RSS de entrenamiento.
+\item \textbf{Programe una función} que, para una predictora numérica, evalúe todos los cortes admisibles (puntos medios entre valores consecutivos distintos que dejan al menos $10$ jugadores a cada lado) y devuelva el RSS izquierdo, el derecho y el total de cada uno. Aplíquela a \textit{Years} y a \textit{Hits}, grafique el RSS total frente al punto de corte y reporte el número de cortes admisibles, el mejor corte de cada predictora y la primera división del árbol.
+\item Ajuste un árbol de regresión con profundidad máxima $2$, al menos $20$ jugadores para intentar una división y $10$ por hoja. Dibújelo, reporte la regla, el número de jugadores y la predicción de cada hoja, y represente la partición del plano $(\textit{Years}, \textit{Hits})$. \textbf{Describa las cuatro regiones}. ¿Por qué el corte en \textit{Hits} es distinto en cada rama?
+\item Para tres jugadores nuevos con $(\textit{Years}, \textit{Hits})$ iguales a $(3, 150)$, $(7, 90)$ y $(12, 160)$, siga las reglas del árbol hasta su hoja, obtenga la predicción y verifíquela con la función de predicción. Exprésela en miles de dólares mediante $e^{\widehat{y}}$ y \textbf{explique} por qué este valor no es el salario promedio de los jugadores de la hoja.
+\item Compare el RSS, el MSE y el RMSE de entrenamiento y de prueba de la media de entrenamiento, del árbol del punto 3 y de una regresión lineal múltiple con \textit{Years} y \textit{Hits}. ¿Qué modelo predice mejor a los jugadores de prueba? \textbf{Relacione} el resultado con los gráficos del punto 1.
+\item Para profundidades máximas de $1$ a $6$, obtenga el MSE de entrenamiento, el de validación cruzada de $10$ particiones (calculado \textbf{solo con el entrenamiento}) y el de prueba, y grafique las tres curvas. Elija la profundidad y \textbf{justifique} por qué se elige con validación cruzada y no con el conjunto de prueba. Relacione la curva de entrenamiento con el punto 1(b) de la parte teórica.
+\item Defina la clase \textit{Alto} si $\textit{Salary} \geq 500$ y \textit{Bajo} en otro caso, y reporte su proporción en el entrenamiento y en la prueba. Adapte la función del punto 2 al Gini ponderado para hallar la primera división, y ajuste un árbol de clasificación con el índice de Gini y profundidad máxima $2$. Reporte las proporciones y la clase predicha de cada hoja, identifique una división cuyas dos hojas predicen la misma clase y \textbf{relaciónela} con el punto 3(c) de la parte teórica. Para los jugadores del punto 4, obtenga $\widehat{P}(\textit{Alto})$ y la clase predicha.
+\item Con \textit{Alto} como clase positiva, obtenga la matriz de confusión de prueba, la tasa de clasificación correcta (TCC), la tasa de error, la sensibilidad y la especificidad del árbol del punto 7, de un árbol de profundidad máxima $1$ y de una regresión logística con \textit{Years} y \textit{Hits} (umbral $0.5$). \textbf{Discuta} qué revela la matriz de confusión que la TCC por sí sola no muestra.
+\end{enumerate}
+
+**Observación:** En R use `rpart()` con `method = "anova"`, o con `method = "class"` y `parms = list(split = "gini")`, y `rpart.control(maxdepth = ..., minsplit = 20, minbucket = 10, cp = 0, xval = 0)`; en los árboles de clasificación use `cp = -1`, porque con `cp = 0` la función descarta las divisiones que reducen el Gini sin reducir el error de clasificación, y scikit-learn sí las conserva. En Python use `min_samples_split=20`, `min_samples_leaf=10` y `random_state=2026`. En el punto 6 use particiones consecutivas de $20$ jugadores (`KFold(n_splits=10)` en Python y `rep(1:10, each = 20)` en R); el MSE de validación cruzada puede diferir en la tercera cifra decimal entre los dos lenguajes, porque R envía a la derecha los jugadores que caen justo sobre un corte y scikit-learn, a la izquierda.
+
+```{=html}
+<!--
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\noindent
+-->
+```

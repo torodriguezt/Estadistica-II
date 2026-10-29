@@ -65,7 +65,7 @@ default <- Default
 
 Con el propósito de profundizar en los métodos locales de interpretación vistos en clase, se propone afrontar este taller en dos partes: una de teoría básica y otra práctica.
 
-**La parte computacional puede resolverse indistintamente en R o en Python.**
+**La parte computacional se resuelve en Python.**
 
 ## Parte teórica
 
@@ -89,17 +89,10 @@ Dé respuesta a las preguntas formuladas a continuación con base en la teoría 
     \item (c) Si el modelo cumpliera $v(\mathcal{C} \cup \{I\}) = v(\mathcal{C})$ para toda coalición $\mathcal{C}$ sin $I$, ¿cuánto valdría $\phi_{I}$? ¿Qué propiedad lo garantiza?
   \end{itemize}
 
-  \item Considere un modelo lineal $\widehat{f}(x) = \beta_{0} + \sum_{j=1}^{p}\beta_{j}x_{j}$ y la función de valor vista en clase, $v(\mathcal{C}) = \frac{1}{n}\sum_{i=1}^{n}\widehat{f}\left(x_{0,\mathcal{C}},\ x_{\bar{\mathcal{C}}}^{(i)}\right)$.
+  \item Considere un modelo lineal $\widehat{f}(x) = \beta_{0} + \sum_{j=1}^{p}\beta_{j}x_{j}$ y la función de valor vista en clase, $v(\mathcal{C}) = \frac{1}{n}\sum_{i=1}^{n}\widehat{f}\left(x_{0,\mathcal{C}},\ x_{\bar{\mathcal{C}}}^{(i)}\right)$. Para este modelo, el valor de Shapley de cada predictora es $\phi_{j} = \beta_{j}\left(x_{0j} - \bar{x}_{j}\right)$.
   \begin{itemize}
-    \item (a) Demuestre que $\phi_{j} = \beta_{j}\left(x_{0j} - \bar{x}_{j}\right)$.
-    \item (b) Explique por qué $\phi_{j}$ puede ser cero aunque $|\beta_{j}|$ sea muy grande, y qué diferencia hay entre leer $\beta_{j}$ y leer $\phi_{j}$.
-    \item (c) En una regresión logística, el resultado de (a) se cumple en la escala del logaritmo de las chances, pero \textbf{no} en la de la probabilidad. Explique por qué.
-  \end{itemize}
-
-  \item Para el mismo modelo lineal, considere LIME con regresores estandarizados $\tilde{z}_{ij} = (z_{ij} - x_{0j})/s_{j}$ y pesos $\pi_{x_{0}}(z_{i}) > 0$.
-  \begin{itemize}
-    \item (a) Demuestre que, para cualquier ancho de núcleo, la solución de mínimos cuadrados ponderados es $\widehat{\beta}_{0} = \widehat{f}(x_{0})$ y $\widehat{\beta}_{j} = \beta_{j}\,s_{j}$.
-    \item (b) Compare esta explicación con la de SHAP del punto 2(a). ¿Por qué, aun para un modelo lineal, responden preguntas distintas?
+    \item (a) Explique por qué $\phi_{j}$ puede ser cero aunque $|\beta_{j}|$ sea muy grande, y qué diferencia hay entre leer $\beta_{j}$ y leer $\phi_{j}$.
+    \item (b) En una regresión logística, la expresión anterior se cumple en la escala del logaritmo de las chances, pero \textbf{no} en la de la probabilidad. Explique por qué.
   \end{itemize}
 
   \item Determine el valor de verdad de las siguientes afirmaciones. \textbf{Justifique en todos los casos.}
@@ -114,7 +107,7 @@ Dé respuesta a las preguntas formuladas a continuación con base en la teoría 
 
 ## Ejercicio con datos reales
 
-Considere el conjunto de datos `Default`, que registra para $10\,000$ clientes de una entidad financiera si incumplieron el pago de su tarjeta de crédito. Está disponible en `ISLR2` (R) y en `ISLP` (Python).
+Considere el conjunto de datos `Default`, que registra para $10\,000$ clientes de una entidad financiera si incumplieron el pago de su tarjeta de crédito. Se carga con `load_data("Default")` del paquete `ISLP` de Python.
 
 ```{r, echo=FALSE}
 head(default, 5) |>
@@ -141,7 +134,7 @@ La respuesta es *default* (si el cliente incumplió). Las covariables son *stude
 \begin{enumerate}
 \item Divida el conjunto en entrenamiento ($70\%$) y prueba ($30\%$), \textbf{fijando la semilla}. Ajuste un bosque aleatorio de clasificación con $B = 500$ árboles y tamaño mínimo de nodo $20$, y compare su tasa de error de prueba con la de una regresión logística.
 \item Tome como $x_{0}$ al cliente de prueba con probabilidad estimada \textbf{más cercana a $0.5$}. \textbf{Sin usar librerías de interpretación}, obtenga $v(\mathcal{C})$ para las $8$ coaliciones, usando el entrenamiento como referencia, y calcule los valores de Shapley como en el punto 1. Verifique la eficiencia.
-\item Obtenga los valores SHAP de $x_{0}$ con una librería (\texttt{shap} en Python o \texttt{kernelshap} en R), compárelos con el punto anterior y preséntelos en un \textbf{gráfico de cascada}. \textbf{Interprete.}
+\item Obtenga los valores SHAP de $x_{0}$ con la librería \texttt{shap}, compárelos con el punto anterior y preséntelos en un \textbf{gráfico de cascada}. \textbf{Interprete.}
 \item Implemente LIME para $x_{0}$ con $M = 3000$ perturbaciones y anchos de núcleo $0.25\sqrt{p}$, $0.75\sqrt{p}$ y $3\sqrt{p}$. Repita con $10$ semillas distintas y \textbf{comente} la estabilidad del coeficiente de \textit{balance}.
 \item Con la curva ICE de \textit{balance} para $x_{0}$, encuentre el saldo a partir del cual la probabilidad estimada baja de $0.5$. \textbf{Discuta} si este contrafactual es plausible y accionable para el cliente.
 \item Obtenga los valores SHAP para $500$ clientes de prueba y construya el gráfico de resumen y el de dependencia de \textit{balance} coloreado por \textit{student}. Compare la media de $|\phi_{j}|$ con la importancia por permutación del bosque y \textbf{explique} las diferencias.
