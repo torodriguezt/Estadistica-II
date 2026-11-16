@@ -312,3 +312,7 @@ def evaluar_sustituto(sustituto, modelo, X_prueba, y_prueba, reglas=True):
     return {"fidelidad": sustituto.score(X_prueba, modelo.predict(X_prueba)),
             "error_sustituto": _error(modelo, y_prueba, sustituto.predict(X_prueba)),
             "error_modelo": _error(modelo, y_prueba, modelo.predict(X_prueba))}
+
+
+
+
